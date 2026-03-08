@@ -12,3 +12,5 @@ endif()
 if (USE_PTESTS)
    add_subdirectory(PerformanceTests)
 endif()
+
+add_subdirectory(MPI)
