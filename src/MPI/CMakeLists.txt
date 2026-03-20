@@ -6,6 +6,7 @@ include_directories(
     ${FFT_INCLUDES})
 
 add_executable(mpi
+    src/MpiTransmissionUtilities.cpp
     src/Main.cpp)
 
 target_link_libraries(mpi
