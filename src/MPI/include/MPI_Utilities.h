@@ -4,25 +4,30 @@
 
 #include "Grid.h"
 
+namespace mpi
+{
+// Defines the direction, in which the transmission will be performed (From sender to receiver)
+enum class Direction
+{
+    positiveX,
+    negativeX,
+    positiveY,
+    negativeY,
+    positiveZ,
+    negativeZ
+};
+
+
+// Calls MPI_Type_free on all types stored in mpi_type_cache
+void cleanUpMpiTypes(std::vector<MPI_Datatype>& mpi_type_cache);
+
 // Wrapper class for mpi utility functions, CAN NOT BE INSTANCED!
 // All method are static
-class MpiTransmissionUtilities final
+class MPI_FieldUtils final
 {
 private:
     // Private constructor to prevent instancing
-    MpiTransmissionUtilities() {}
-
-public:
-    // Defines the direction, in which the transmission will be performed (From sender to receiver)
-    enum class Direction
-    {
-        positiveX,
-        negativeX,
-        positiveY,
-        negativeY,
-        positiveZ,
-        negativeZ
-    };
+    MPI_FieldUtils() {}
 
 private:
     // Defines an mpi data type for transmitting a line of elements (alligned with coordinate axes)
@@ -50,7 +55,6 @@ public:
     // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
     static void defineMpiTransmission_Recv(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
         std::vector<MPI_Datatype>& mpi_type_cache);
-
-    // Calls MPI_Type_free on all types stored in mpi_type_cache
-    static void cleanUpMpiTypes(std::vector<MPI_Datatype>& mpi_type_cache);
 };
+
+}

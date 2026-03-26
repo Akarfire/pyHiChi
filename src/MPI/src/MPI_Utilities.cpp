@@ -1,14 +1,25 @@
-#include "MpiTransmissionUtilities.h"
+#include "MPI_Utilities.h"
+
+namespace mpi
+{
+
+// Calls MPI_Type_free on all types stored in mpi_type_cache
+void cleanUpMpiTypes(std::vector<MPI_Datatype>& mpi_type_cache)
+{
+    for (auto& type : mpi_type_cache)
+        MPI_Type_free(&type);
+}
+
 
 // Defines an mpi data type for transmitting a line of elements (alligned with coordinate axes)
-void MpiTransmissionUtilities::defineLineType(MPI_Datatype &out_type, int count, int stride)
+void MPI_FieldUtils::defineLineType(MPI_Datatype &out_type, int count, int stride)
 {
     MPI_Type_vector(count, 1, stride, MPI_DOUBLE, &out_type);
     MPI_Type_commit(&out_type);
 }
 
 // Defines an mpi data type for transmitting a plane of elements (alligned with coordinate axes)
-void MpiTransmissionUtilities::definePlaneType(MPI_Datatype &out_type, const MPI_Datatype &line_type, int count, int stride)
+void MPI_FieldUtils::definePlaneType(MPI_Datatype &out_type, const MPI_Datatype &line_type, int count, int stride)
 {
     // Calculating stride in bytes
     MPI_Aint byte_stride;
@@ -21,7 +32,7 @@ void MpiTransmissionUtilities::definePlaneType(MPI_Datatype &out_type, const MPI
 }
 
 // Resolving "send" operation parameters based on direction
-void MpiTransmissionUtilities::resolveSendParameters(int &line_count, int &line_stride, int &plane_count, int &plane_stride, int &offset, 
+void MPI_FieldUtils::resolveSendParameters(int &line_count, int &line_stride, int &plane_count, int &plane_stride, int &offset, 
         const pfc::Int3& num_cells, Direction direction)
 {
     switch (direction)
@@ -91,7 +102,7 @@ void MpiTransmissionUtilities::resolveSendParameters(int &line_count, int &line_
 }
 
 // Resolving "recv" operation parameters based on direction
-void MpiTransmissionUtilities::resolveRecvParameters(int &line_count, int &line_stride, int &plane_count, int &plane_stride, int &offset, 
+void MPI_FieldUtils::resolveRecvParameters(int &line_count, int &line_stride, int &plane_count, int &plane_stride, int &offset, 
         const pfc::Int3& num_cells, Direction direction)
 {
     // IMPORTANT: Direction is specified relative to the SENDER
@@ -164,7 +175,7 @@ void MpiTransmissionUtilities::resolveRecvParameters(int &line_count, int &line_
 
 // Determines mpi data type and required offset to send field data in the required direction
 // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
-void MpiTransmissionUtilities::defineMpiTransmission_Send(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
+void MPI_FieldUtils::defineMpiTransmission_Send(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
     std::vector<MPI_Datatype>& mpi_type_cache)
 {
     // Parameters
@@ -196,7 +207,7 @@ void MpiTransmissionUtilities::defineMpiTransmission_Send(int& out_offset, MPI_D
 
 // Determines mpi data type and required offset to received field data from the required direction (direction relative to the sender)
 // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
-void MpiTransmissionUtilities::defineMpiTransmission_Recv(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
+void MPI_FieldUtils::defineMpiTransmission_Recv(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
     std::vector<MPI_Datatype>& mpi_type_cache)
 {
     // Parameters
@@ -225,10 +236,4 @@ void MpiTransmissionUtilities::defineMpiTransmission_Recv(int& out_offset, MPI_D
     out_offset = offset;
     out_type = planeType;
 }
-
-// Calls MPI_Type_free on all types stored in mpi_type_cache
-void MpiTransmissionUtilities::cleanUpMpiTypes(std::vector<MPI_Datatype>& mpi_type_cache)
-{
-    for (auto& type : mpi_type_cache)
-        MPI_Type_free(&type);
 }
