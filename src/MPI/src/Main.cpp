@@ -18,7 +18,7 @@ using FP = pfc::FP;
 using FP3 = pfc::FP3;
 using Int3 = pfc::Int3;
 
-#define testFieldComponent Ex
+#define testFieldComponent Ey
 
 FP3 eFunc_0(FP3 coords, FP t) 
 {
@@ -157,73 +157,66 @@ int main(int argc, char** argv)
 
     std::vector<MPI_Datatype> mpi_type_cache;
 
-    auto direction_1 = mpi::Direction::positiveX;
-    auto direction_2 =mpi::Direction::negativeX;
+    auto direction_1 = mpi::Direction::positiveY;
+    auto direction_2 = mpi::Direction::negativeY;
 
     if (rank == 0)
     {
         // Wave 1
-        int send_offset;
         MPI_Datatype send_type;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Send(send_offset, send_type, grid->numCells, direction_1, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Send(send_type, grid->numCells, direction_1, mpi_type_cache);
 
-        MPI_Send(grid->testFieldComponent.getData() + send_offset, 1, send_type, 1, 0, MPI_COMM_WORLD);
+        MPI_Send(grid->testFieldComponent.getData() , 1, send_type, 1, 0, MPI_COMM_WORLD);
         
         // Wave 2
-        int recv_offset;
         MPI_Datatype recv_type;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Recv(recv_offset, recv_type, grid->numCells, direction_2, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Recv(recv_type, grid->numCells, direction_2, mpi_type_cache);
 
         MPI_Status status;
-        MPI_Recv(grid->testFieldComponent.getData() + recv_offset, 1, recv_type, 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type, 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     }
 
     if (rank == 1)
     {
         // Wave 1
-        int recv_offset;
         MPI_Datatype recv_type;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Recv(recv_offset, recv_type, grid->numCells, direction_1, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Recv(recv_type, grid->numCells, direction_1, mpi_type_cache);
 
         MPI_Status status;
-        MPI_Recv(grid->testFieldComponent.getData() + recv_offset, 1, recv_type, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-        int send_offset_to_2;
         MPI_Datatype send_type_to_2;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Send(send_offset_to_2, send_type_to_2, grid->numCells, direction_1, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Send(send_type_to_2, grid->numCells, direction_1, mpi_type_cache);
 
-        MPI_Send(grid->testFieldComponent.getData() + send_offset_to_2, 1, send_type_to_2, 2, 0, MPI_COMM_WORLD);
+        MPI_Send(grid->testFieldComponent.getData(), 1, send_type_to_2, 2, 0, MPI_COMM_WORLD);
 
         // Wave 2
-        int send_offset;
+    
         MPI_Datatype send_type;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Send(send_offset, send_type, grid->numCells, direction_2, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Send(send_type, grid->numCells, direction_2, mpi_type_cache);
 
-        MPI_Send(grid->testFieldComponent.getData() + send_offset, 1, send_type, 0, 0, MPI_COMM_WORLD);
+        MPI_Send(grid->testFieldComponent.getData(), 1, send_type, 0, 0, MPI_COMM_WORLD);
 
-        int recv_offset_from_2;
         MPI_Datatype recv_type_from_2;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Recv(recv_offset_from_2, recv_type_from_2, grid->numCells, direction_2, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Recv(recv_type_from_2, grid->numCells, direction_2, mpi_type_cache);
 
-        MPI_Recv(grid->testFieldComponent.getData() + recv_offset_from_2, 1, recv_type_from_2, 2, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type_from_2, 2, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
     }
 
     if (rank == 2)
     {
         // Wave 1
-        int recv_offset;
         MPI_Datatype recv_type;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Recv(recv_offset, recv_type, grid->numCells, direction_1, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Recv(recv_type, grid->numCells, direction_1, mpi_type_cache);
 
         MPI_Status status;
-        MPI_Recv(grid->testFieldComponent.getData() + recv_offset, 1, recv_type, 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type, 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
         // Wave 2
-        int send_offset;
         MPI_Datatype send_type;
-        mpi::MPI_FieldUtils::defineMpiTransmission_Send(send_offset, send_type, grid->numCells, direction_2, mpi_type_cache);
+        mpi::MPI_FieldUtils::defineTransmission_Send(send_type, grid->numCells, direction_2, mpi_type_cache);
 
-        MPI_Send(grid->testFieldComponent.getData() + send_offset, 1, send_type, 1, 0, MPI_COMM_WORLD);
+        MPI_Send(grid->testFieldComponent.getData(), 1, send_type, 1, 0, MPI_COMM_WORLD);
     }
 
     mpi::cleanUpMpiTypes(mpi_type_cache);

@@ -30,30 +30,27 @@ private:
     MPI_FieldUtils() {}
 
 private:
-    // Defines an mpi data type for transmitting a line of elements (alligned with coordinate axes)
-    static void defineLineType(MPI_Datatype &out_type, int count, int stride);
-
-    // Defines an mpi data type for transmitting a plane of elements (alligned with coordinate axes)
-    static void definePlaneType(MPI_Datatype &out_type, const MPI_Datatype &line_type, int count, int stride);
+    // Defines an mpi data type for transmitting sub arrays of the grid
+    static void defineSubArrayType(MPI_Datatype &out_type, int sizes[3], int sub_sizes[3], int starts[3], std::vector<MPI_Datatype>& mpi_type_cache);
 
     // Resolving "send" operation parameters based on direction
-    static void resolveSendParameters(int &line_count, int &line_stride, int &plane_count, int &plane_stride, int &offset, 
+    static void resolveSendParameters(int out_sizes[3], int out_sub_sizes[3], int out_starts[3], 
         const pfc::Int3& num_cells, Direction direction);
 
     // Resolving "recv" operation parameters based on direction
-    static void resolveRecvParameters(int &line_count, int &line_stride, int &plane_count, int &plane_stride, int &offset, 
+    static void resolveRecvParameters(int out_sizes[3], int out_sub_sizes[3], int out_starts[3], 
         const pfc::Int3& num_cells, Direction direction);
 
 public:
 
-    // Determines mpi data type and required offset to send field data in the required direction
+    // Determines mpi data type required to send field data in the required direction
     // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
-    static void defineMpiTransmission_Send(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
+    static void defineTransmission_Send(MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
         std::vector<MPI_Datatype>& mpi_type_cache);
 
-    // Determines mpi data type and required offset to received field data from the required direction (direction relative to the sender)
+     // Determines mpi data type required to received field data from the required direction (direction relative to the sender)
     // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
-    static void defineMpiTransmission_Recv(int& out_offset, MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
+    static void defineTransmission_Recv(MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
         std::vector<MPI_Datatype>& mpi_type_cache);
 };
 
