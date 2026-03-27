@@ -18,7 +18,7 @@ using FP = pfc::FP;
 using FP3 = pfc::FP3;
 using Int3 = pfc::Int3;
 
-#define testFieldComponent Ey
+#define testFieldComponent Ex
 
 FP3 eFunc_0(FP3 coords, FP t) 
 {
@@ -113,21 +113,21 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
     std::cout << std::endl << std::endl;
 }
 
-int main()
-{
-    mpi::Topology topology(mpi::Topology::Type::lineX, mpi::Topology::LoopType::loopXYZ, 3);
+// int main()
+// {
+//     mpi::Topology topology(mpi::Topology::Type::lineX, mpi::Topology::LoopType::loopXYZ, 3);
 
-    for (int rank = 0; rank < 3; rank++)
-    {
-        std::cout << "Rank " << rank << std::endl;
-        for (int n = 0; n < 6; n++)
-        {
-            std::cout << n << " : " << topology.getNeighbor(rank, static_cast<mpi::Direction>(n)) << std::endl;
-        }
-    }
-}
+//     for (int rank = 0; rank < 3; rank++)
+//     {
+//         std::cout << "Rank " << rank << std::endl;
+//         for (int n = 0; n < 6; n++)
+//         {
+//             std::cout << n << " : " << topology.getNeighbor(rank, static_cast<mpi::Direction>(n)) << std::endl;
+//         }
+//     }
+// }
 
-int main_2(int argc, char** argv)
+int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
 
@@ -145,120 +145,26 @@ int main_2(int argc, char** argv)
 
     initializeGrid(grid, rank);
 
-    if (rank == 0)
-    {    
-        debugPrintGrid_xyplane(grid, 0);
-        //debugPrintGrid_xzplane(grid, 0);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (rank == 1)
-    {    
-        debugPrintGrid_xyplane(grid, 0);
-        //debugPrintGrid_xzplane(grid, 0);
-    }
-    
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (rank == 2)
-    {    
-        debugPrintGrid_xyplane(grid, 0);
-        //debugPrintGrid_xplane(grid, 0);
+    // Debug print
+    for (int r = 0; r < size; r++)
+    {
+        if (rank == r)
+            debugPrintGrid_xyplane(grid, 0);
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
     // Exchange logic
+    mpi::Topology topology(mpi::Topology::Type::lineX, mpi::Topology::LoopType::loopX, size);
+    mpi::FieldExchanger exchanger(grid->numCells);
+    exchanger.PerformExchangeSequence(grid->testFieldComponent.getData(), topology, rank, MPI_COMM_WORLD);
 
-    std::vector<MPI_Datatype> mpi_type_cache;
-
-    auto direction_1 = mpi::Direction::positiveY;
-    auto direction_2 = mpi::Direction::negativeY;
-
-    if (rank == 0)
+    // Debug print
+    for (int r = 0; r < size; r++)
     {
-        // Wave 1
-        MPI_Datatype send_type;
-        mpi::FieldUtils::defineTransmission_Send(send_type, grid->numCells, direction_1, mpi_type_cache);
-
-        MPI_Send(grid->testFieldComponent.getData() , 1, send_type, 1, 0, MPI_COMM_WORLD);
-        
-        // Wave 2
-        MPI_Datatype recv_type;
-        mpi::FieldUtils::defineTransmission_Recv(recv_type, grid->numCells, direction_2, mpi_type_cache);
-
-        MPI_Status status;
-        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type, 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        if (rank == r)
+            debugPrintGrid_xyplane(grid, 0);
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-
-    if (rank == 1)
-    {
-        // Wave 1
-        MPI_Datatype recv_type;
-        mpi::FieldUtils::defineTransmission_Recv(recv_type, grid->numCells, direction_1, mpi_type_cache);
-
-        MPI_Status status;
-        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-        MPI_Datatype send_type_to_2;
-        mpi::FieldUtils::defineTransmission_Send(send_type_to_2, grid->numCells, direction_1, mpi_type_cache);
-
-        MPI_Send(grid->testFieldComponent.getData(), 1, send_type_to_2, 2, 0, MPI_COMM_WORLD);
-
-        // Wave 2
-    
-        MPI_Datatype send_type;
-        mpi::FieldUtils::defineTransmission_Send(send_type, grid->numCells, direction_2, mpi_type_cache);
-
-        MPI_Send(grid->testFieldComponent.getData(), 1, send_type, 0, 0, MPI_COMM_WORLD);
-
-        MPI_Datatype recv_type_from_2;
-        mpi::FieldUtils::defineTransmission_Recv(recv_type_from_2, grid->numCells, direction_2, mpi_type_cache);
-
-        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type_from_2, 2, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-    }
-
-    if (rank == 2)
-    {
-        // Wave 1
-        MPI_Datatype recv_type;
-        mpi::FieldUtils::defineTransmission_Recv(recv_type, grid->numCells, direction_1, mpi_type_cache);
-
-        MPI_Status status;
-        MPI_Recv(grid->testFieldComponent.getData(), 1, recv_type, 1, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
-        // Wave 2
-        MPI_Datatype send_type;
-        mpi::FieldUtils::defineTransmission_Send(send_type, grid->numCells, direction_2, mpi_type_cache);
-
-        MPI_Send(grid->testFieldComponent.getData(), 1, send_type, 1, 0, MPI_COMM_WORLD);
-    }
-
-    mpi::cleanUpMpiTypes(mpi_type_cache);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (rank == 0)
-    {    
-        debugPrintGrid_xyplane(grid, 0);
-        //debugPrintGrid_xzplane(grid, 0);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (rank == 1)
-    {    
-        debugPrintGrid_xyplane(grid, 0);
-        //debugPrintGrid_xzplane(grid, 0);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (rank == 2)
-    {    
-        debugPrintGrid_xyplane(grid, 0);
-        //debugPrintGrid_xzplane(grid, 0);
-    }
-
 
     MPI_Finalize();
     return 0;

@@ -20,6 +20,9 @@ enum class Direction
     negativeZ
 };
 
+// Returns the inverse of the specified direction
+Direction invertDirection(const Direction& direction);
+
 // A class that describes abstracted mpi topology
 class Topology final
 {
@@ -47,10 +50,6 @@ public:
         // List of neighbouring ranks
         // Access using `mpi::Direction direction`
         std::vector<int> neighbors;
-
-        // Node color, used to arrange transmissions in the correct order
-        // Neighboring nodes MUST have differing colors 
-        unsigned int color;
     };
 
 public:
@@ -91,15 +90,11 @@ public:
 
     // Returns rank of the node's neighbor in the specified direction
     // MPI_INVALID_RANK if no neighbor exists
-    int getNeighbor(int node_rank, Direction direction);
+    int getNeighbor(int node_rank, Direction direction) const;
 
     // Returns data about the specified node (rank)
-    const NodeData& getNodeData(int node_rank) { return data[node_rank]; }
+    const NodeData& getNodeData(int node_rank) const { return data[node_rank]; }
 };
-
-
-// Calls MPI_Type_free on all types stored in mpi_type_cache
-void cleanUpMpiTypes(std::vector<MPI_Datatype>& mpi_type_cache);
 
 
 // Wrapper class for mpi field utility functions, CAN NOT BE INSTANCED!
@@ -112,7 +107,7 @@ private:
 
 private:
     // Defines an mpi data type for transmitting sub arrays of the grid
-    static void defineSubArrayType(MPI_Datatype &out_type, int sizes[3], int sub_sizes[3], int starts[3], std::vector<MPI_Datatype>& mpi_type_cache);
+    static void defineSubArrayType(MPI_Datatype &out_type, int sizes[3], int sub_sizes[3], int starts[3]);
 
     // Resolving "send" operation parameters based on direction
     static void resolveSendParameters(int out_sizes[3], int out_sub_sizes[3], int out_starts[3], 
@@ -125,14 +120,35 @@ private:
 public:
 
     // Determines mpi data type required to send field data in the required direction
-    // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
-    static void defineTransmission_Send(MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
-        std::vector<MPI_Datatype>& mpi_type_cache);
+    static void defineTransmission_Send(MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction);
 
      // Determines mpi data type required to received field data from the required direction (direction relative to the sender)
-    // All created types are stored into mpi_type_cache, for it to be cleaned up later (using cleanUpMpiTypes)
-    static void defineTransmission_Recv(MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction,
-        std::vector<MPI_Datatype>& mpi_type_cache);
+    static void defineTransmission_Recv(MPI_Datatype& out_type, pfc::Int3 grid_num_cells, Direction direction);
+};
+
+
+// Performs field exchange sequence
+class FieldExchanger final
+{
+private:
+    // MPI types used for sending field data
+    // Access using `mpi::Direction direction`
+    std::vector<MPI_Datatype> sendTypes;
+
+    // MPI types used for receiving field data
+    // Access using `mpi::Direction direction`
+    std::vector<MPI_Datatype> recvTypes;
+
+public:
+
+    // Constructor that will create types for sending and recieving 
+    FieldExchanger(const pfc::Int3& grid_num_cells);
+    // Frees created mpi types
+    ~FieldExchanger();
+
+    // Performs echange sequence iteration for node "rank" in the specified topology
+    // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY
+    void PerformExchangeSequence(pfc::FP* data, const Topology& topology, int rank, MPI_Comm communicator = MPI_COMM_WORLD);
 };
 
 }
