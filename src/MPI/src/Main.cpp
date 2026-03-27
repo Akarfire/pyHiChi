@@ -115,15 +115,23 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
 
 // int main()
 // {
-//     mpi::Topology topology(mpi::Topology::Type::lineX, mpi::Topology::LoopType::loopXYZ, 3);
-
-//     for (int rank = 0; rank < 3; rank++)
+//     try
 //     {
-//         std::cout << "Rank " << rank << std::endl;
-//         for (int n = 0; n < 6; n++)
+//         const int size = 6;
+//         mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
+
+//         for (int rank = 0; rank < size; rank++)
 //         {
-//             std::cout << n << " : " << topology.getNeighbor(rank, static_cast<mpi::Direction>(n)) << std::endl;
+//             std::cout << "Rank " << rank << std::endl;
+//             for (int n = 0; n < 6; n++)
+//             {
+//                 std::cout << n << " : " << topology.getNeighbor(rank, static_cast<mpi::Direction>(n)) << std::endl;
+//             }
 //         }
+//     }
+//     catch(const std::exception& e)
+//     {
+//         std::cerr << e.what() << '\n';
 //     }
 // }
 
@@ -154,7 +162,7 @@ int main(int argc, char** argv)
     }
 
     // Exchange logic
-    mpi::Topology topology(mpi::Topology::Type::lineX, mpi::Topology::LoopType::loopX, size);
+    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
     mpi::FieldExchanger exchanger(grid->numCells);
     exchanger.PerformExchangeSequence(grid->testFieldComponent.getData(), topology, rank, MPI_COMM_WORLD);
 

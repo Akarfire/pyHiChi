@@ -2,6 +2,7 @@
 
 #include <vector>
 
+#include "Vectors.h"
 #include "MPI_Utilities.h"
 
 namespace mpi
@@ -11,13 +12,6 @@ namespace mpi
 class Topology final
 {
 public:
-    // MPI topology type
-    enum class Type
-    {
-        lineX, lineY, lineZ,
-        gridXY, gridYZ, gridXZ,
-        gridXYZ
-    };
 
     // MPI topology looping type
     enum class LoopType
@@ -38,12 +32,13 @@ public:
 
 public:
     // Constructing an abstracted MPI topology based on the number of nodes (ranks) and the desired topology type
-    Topology(Type topology_type, LoopType loop_type, int node_count);
+    // `sections` - Number of sections for each axis
+    Topology(const pfc::Int3& sections, LoopType loop_type, int node_count);
 
 private:
 
-    // Topology type
-    Type type;
+    // Number of sections for each axis
+    pfc::Int3 sections_;
     // Topology looping type
     LoopType loopType;
 
@@ -51,23 +46,18 @@ private:
     // Access using `int rank`
     std::vector<NodeData> data;
 
+    // Converts a 3D index into a 1D index (used only in constructor)
+    // Returns MPI_INVALID_RANK if at least one of coordinates is MPI_INVALID_RANK
+    int convertRankIndex(int x, int y, int z);
+
     bool doesLoopOverX(const LoopType& loop_type);
     bool doesLoopOverY(const LoopType& loop_type);
     bool doesLoopOverZ(const LoopType& loop_type);
 
-    // Initializes line-type (lineX, lineY or lineZ) type topologies (used in constructor)
-    void initLineTopology(std::vector<NodeData>& topology_data, Type type, LoopType loop_type, int node_count);
-
-    // Initializes 2D-Grid-type (gridXY, gridYZ or gridXZ) type topologies (used in constructor)
-    void init2DGridTopology(std::vector<NodeData>& topology_data, Type type, LoopType loop_type, int node_count);
-
-    // Initializes 3D-Grid-type (gridXYZ) type topologies (used in constructor)
-    void init3DGridTopology(std::vector<NodeData>& topology_data, LoopType loop_type, int node_count);
-
 public:
 
-    // Returns the type of the topology
-    Type getType() { return type; }
+    // Returns sections
+    const pfc::Int3& getSections() { return sections_; }
 
     // Returns the type of looping used for this topology
     LoopType getLoopType() { return loopType; }

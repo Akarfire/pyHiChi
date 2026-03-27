@@ -4,18 +4,48 @@ namespace mpi
 {
     
 // Constructing an abstracted MPI topology based on the number of nodes (ranks) and the desired topology type
-Topology::Topology(Type topology_type, LoopType loop_type, int node_count) : type(topology_type), loopType(loop_type)
+Topology::Topology(const pfc::Int3& sections, LoopType loop_type, int node_count) : sections_(sections), loopType(loop_type)
 {
-    // Line topology
-    if (topology_type == Type::lineX || topology_type == Type::lineY || topology_type == Type::lineZ)
-        initLineTopology(data, topology_type, loop_type, node_count);
+    // Checking if topology is possible
+    if (node_count < sections.x * sections.y * sections.z)
+        throw std::runtime_error("MPI TOPOLOGY : Impossible topology for the specified number of nodes");
 
-    // 2D Grid topology
-    else if (topology_type == Type::gridXY || topology_type == Type::gridYZ || topology_type == Type::gridXZ)
-        init2DGridTopology(data, topology_type, loop_type, node_count);
-    
-    // 3D Grid topology
-    init3DGridTopology(data, loop_type, node_count);
+    // Constructing topology
+    for (int x = 0; x < sections.x; x++)
+        for (int y = 0; y < sections.y; y++)
+            for (int z = 0; z < sections.z; z++)
+            {
+                NodeData nodeData = NodeData();
+
+                int p_x = convertRankIndex((x + 1 < sections.x ? (x + 1) : (doesLoopOverX(loop_type) ? 0 : MPI_INVALID_RANK)), y, z);
+                int n_x = convertRankIndex((x - 1 >= 0) ? (x - 1) : (doesLoopOverX(loop_type) ? (sections.x - 1) : MPI_INVALID_RANK), y, z);
+                
+                int p_y = convertRankIndex(x, (y + 1 < sections.y ? (y + 1) : (doesLoopOverY(loop_type) ? 0 : MPI_INVALID_RANK)), z);
+                int n_y = convertRankIndex(x, (y - 1 >= 0) ? (y - 1) : (doesLoopOverY(loop_type) ? (sections.y - 1) : MPI_INVALID_RANK), z);
+
+                int p_z = convertRankIndex(x, y, (z + 1 < sections.z ? (z + 1) : (doesLoopOverZ(loop_type) ? 0 : MPI_INVALID_RANK)));
+                int n_z = convertRankIndex(x, y, (z - 1 >= 0) ? (z - 1) : (doesLoopOverZ(loop_type) ? (sections.z - 1) : MPI_INVALID_RANK));
+
+                nodeData.neighbors.resize(6);
+                nodeData.neighbors[static_cast<int>(Direction::positiveX)] = p_x;
+                nodeData.neighbors[static_cast<int>(Direction::negativeX)] = n_x;
+                nodeData.neighbors[static_cast<int>(Direction::positiveY)] = p_y;
+                nodeData.neighbors[static_cast<int>(Direction::negativeY)] = n_y;
+                nodeData.neighbors[static_cast<int>(Direction::positiveZ)] = p_z;
+                nodeData.neighbors[static_cast<int>(Direction::negativeZ)] = n_z;
+
+                data.push_back(nodeData);
+            }
+}
+
+// Converts a 3D index into a 1D index (used only in constructor)
+// Returns MPI_INVALID_RANK if at least one of coordinates is MPI_INVALID_RANK
+int Topology::convertRankIndex(int x, int y, int z)
+{
+    if (x == MPI_INVALID_RANK || y == MPI_INVALID_RANK || z == MPI_INVALID_RANK)
+        return MPI_INVALID_RANK;
+
+    return x * sections_.y * sections_.z + y * sections_.z + z;
 }
 
 bool Topology::doesLoopOverX(const LoopType& loop_type)
@@ -40,99 +70,6 @@ bool Topology::doesLoopOverZ(const LoopType& loop_type)
         || loop_type == LoopType::loopXYZ;
 }
 
-
-// Initializes line-type (lineX, lineY or lineZ) type topologies (used in constructor)
-void Topology::initLineTopology(std::vector<NodeData>& topology_data, Type type, LoopType loop_type, int node_count)
-{
-    topology_data.clear();
-
-    for (int rank = 0; rank < node_count; rank++)
-    {
-        NodeData nodeData = NodeData();
-        
-        for (int i = 0; i < 6; i++)
-            nodeData.neighbors.push_back(MPI_INVALID_RANK);
-
-        if (node_count > 1)
-        {           
-            switch(type)
-            {
-            case Type::lineX:
-                nodeData.neighbors[static_cast<int>(Direction::positiveX)] = 
-                    (rank + 1 < node_count) ? (rank + 1) : (doesLoopOverX(loop_type) ? 0 : MPI_INVALID_RANK);
-
-                nodeData.neighbors[static_cast<int>(Direction::negativeX)] = 
-                    (rank - 1 >= 0) ? (rank - 1) : (doesLoopOverX(loop_type) ? (node_count - 1) : MPI_INVALID_RANK);
-
-                if (doesLoopOverY(loop_type))
-                {
-                    nodeData.neighbors[static_cast<int>(Direction::positiveY)] = rank;
-                    nodeData.neighbors[static_cast<int>(Direction::negativeY)] = rank;
-                }
-                if (doesLoopOverZ(loop_type))
-                {
-                    nodeData.neighbors[static_cast<int>(Direction::positiveZ)] = rank;
-                    nodeData.neighbors[static_cast<int>(Direction::negativeZ)] = rank;
-                }
-                break;
-
-            case Type::lineY:
-                nodeData.neighbors[static_cast<int>(Direction::positiveY)] = 
-                    (rank + 1 < node_count) ? (rank + 1) : (doesLoopOverY(loop_type) ? 0 : MPI_INVALID_RANK);
-
-                nodeData.neighbors[static_cast<int>(Direction::negativeY)] = 
-                    (rank - 1 >= 0) ? (rank - 1) : (doesLoopOverY(loop_type) ? (node_count - 1) : MPI_INVALID_RANK);
-
-                if (doesLoopOverX(loop_type))
-                {
-                    nodeData.neighbors[static_cast<int>(Direction::positiveX)] = rank;
-                    nodeData.neighbors[static_cast<int>(Direction::negativeX)] = rank;
-                }
-                if (doesLoopOverZ(loop_type))
-                {
-                    nodeData.neighbors[static_cast<int>(Direction::positiveZ)] = rank;
-                    nodeData.neighbors[static_cast<int>(Direction::negativeZ)] = rank;
-                }
-                break;
-
-            case Type::lineZ:
-                nodeData.neighbors[static_cast<int>(Direction::positiveZ)] = 
-                    (rank + 1 < node_count) ? (rank + 1) : (doesLoopOverZ(loop_type) ? 0 : MPI_INVALID_RANK);
-
-                nodeData.neighbors[static_cast<int>(Direction::negativeZ)] = 
-                    (rank - 1 >= 0) ? (rank - 1) : (doesLoopOverZ(loop_type) ? (node_count - 1) : MPI_INVALID_RANK);
-
-                if (doesLoopOverX(loop_type))
-                {
-                    nodeData.neighbors[static_cast<int>(Direction::positiveX)] = rank;
-                    nodeData.neighbors[static_cast<int>(Direction::negativeX)] = rank;
-                }
-                if (doesLoopOverY(loop_type))
-                {
-                    nodeData.neighbors[static_cast<int>(Direction::positiveY)] = rank;
-                    nodeData.neighbors[static_cast<int>(Direction::negativeY)] = rank;
-                }
-                break;
-
-            default: break;
-            }
-        }
-
-        topology_data.push_back(nodeData);
-    }
-}
-
-// Initializes 2D-Grid-type (gridXY, gridYZ or gridXZ) type topologies (used in constructor)
-void Topology::init2DGridTopology(std::vector<NodeData>& topology_data, Type type, LoopType loop_type, int node_count)
-{
-    // TO DO : Implement this
-}
-
-// Initializes 3D-Grid-type (gridXYZ) type topologies (used in constructor)
-void Topology::init3DGridTopology(std::vector<NodeData>& topology_data, LoopType loop_type, int node_count)
-{
-    // TO DO : Implement this
-}
 
 // Returns rank of the node's neighbor in the specified direction
 // MPI_INVALID_RANK if no neighbor exists
