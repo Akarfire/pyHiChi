@@ -7,6 +7,9 @@ include_directories(
 
 add_executable(mpi
     src/MPI_Utilities.cpp
+    src/MPI_Topology.cpp
+    src/MPI_FieldUtils.cpp
+    src/MPI_FieldExchanger.cpp
     src/Main.cpp)
 
 target_link_libraries(mpi

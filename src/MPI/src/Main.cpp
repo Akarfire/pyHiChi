@@ -11,7 +11,7 @@
 #include "FieldGeneratorFdtd.h"
 #include "Vectors.h"
 
-#include "MPI_Utilities.h"
+#include "HiChi_MPI.h"
 
 using GridType = pfc::YeeGrid;
 using FP = pfc::FP;
