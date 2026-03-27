@@ -375,16 +375,20 @@ void FieldExchanger::PerformExchangeSequence(pfc::FP* data, const Topology& topo
         // Sync nodes
         MPI_Barrier(communicator);
 
-        // Sending
         MPI_Request request;
-        MPI_Isend(data, 1, sendTypes[dir], send_neighbor, 0, communicator, &request);
+        MPI_Status status;
+
+        // Sending
+        if (send_neighbor != MPI_INVALID_RANK)
+            MPI_Isend(data, 1, sendTypes[dir], send_neighbor, 0, communicator, &request);
         
         // Receiving
-        MPI_Status status;
-        MPI_Recv(data, 1, recvTypes[dir], recv_neighbor, 0, communicator, &status);
+        if (recv_neighbor != MPI_INVALID_RANK)
+            MPI_Recv(data, 1, recvTypes[dir], recv_neighbor, 0, communicator, &status);
 
         // Waiting for send operation to complete
-        MPI_Wait(&request, &status);
+        if (send_neighbor != MPI_INVALID_RANK)
+            MPI_Wait(&request, &status);
     }
 
     // Sync nodes
