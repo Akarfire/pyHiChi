@@ -14,12 +14,18 @@ namespace mpi
 // Defines the direction, in which the transmission will be performed (From sender to receiver)
 enum class Direction
 {
-    positiveX,
-    negativeX,
-    positiveY,
-    negativeY,
-    positiveZ,
-    negativeZ
+    pX, nX,
+    pY, nY,
+    pZ, nZ
+};
+
+// Conversion map to turn mpi::Direction
+// use like this mpi::DirectionToOffset[static_cast<int>(direction)]
+static const pfc::Int3 DirectionToOffset[6] = 
+{
+    pfc::Int3{1, 0, 0}, pfc::Int3{-1, 0, 0},
+    pfc::Int3{0, 1, 0}, pfc::Int3{0, -1, 0},
+    pfc::Int3{0, 0, 1}, pfc::Int3{0, 0, -1}
 };
 
 // Returns the inverse of the specified direction

@@ -113,28 +113,6 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
     std::cout << std::endl << std::endl;
 }
 
-// int main()
-// {
-//     try
-//     {
-//         const int size = 6;
-//         mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
-
-//         for (int rank = 0; rank < size; rank++)
-//         {
-//             std::cout << "Rank " << rank << std::endl;
-//             for (int n = 0; n < 6; n++)
-//             {
-//                 std::cout << n << " : " << topology.getNeighbor(rank, static_cast<mpi::Direction>(n)) << std::endl;
-//             }
-//         }
-//     }
-//     catch(const std::exception& e)
-//     {
-//         std::cerr << e.what() << '\n';
-//     }
-// }
-
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
@@ -153,6 +131,10 @@ int main(int argc, char** argv)
 
     initializeGrid(grid, rank);
 
+    // MPI initialization
+    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
+    mpi::FieldExchanger exchanger(grid->numCells);
+
     // Debug print
     for (int r = 0; r < size; r++)
     {
@@ -162,15 +144,22 @@ int main(int argc, char** argv)
     }
 
     // Exchange logic
-    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
-    mpi::FieldExchanger exchanger(grid->numCells);
-    exchanger.PerformExchangeSequence(grid->testFieldComponent.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.PerformExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.PerformExchangeSequence(grid->Ey.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.PerformExchangeSequence(grid->Ez.getData(), topology, rank, MPI_COMM_WORLD);
+
+    exchanger.PerformExchangeSequence(grid->Bx.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.PerformExchangeSequence(grid->By.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.PerformExchangeSequence(grid->Bz.getData(), topology, rank, MPI_COMM_WORLD);
+
+    if (rank == 0)
+        std::cout << "------------------------------------------------------------------------" << std::endl << std::endl << std::endl;
 
     // Debug print
     for (int r = 0; r < size; r++)
     {
         if (rank == r)
-            debugPrintGrid_xyplane(grid, 0);
+            debugPrintGrid_xyplane(grid, 0 );
         MPI_Barrier(MPI_COMM_WORLD);
     }
 

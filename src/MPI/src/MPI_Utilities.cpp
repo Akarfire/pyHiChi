@@ -8,14 +8,14 @@ Direction invertDirection(const Direction& direction)
 {
     switch (direction)
     {
-    case Direction::positiveX: return Direction::negativeX;
-    case Direction::negativeX: return Direction::positiveX;
-    case Direction::positiveY: return Direction::negativeY;
-    case Direction::negativeY: return Direction::positiveY;
-    case Direction::positiveZ: return Direction::negativeZ;
-    case Direction::negativeZ: return Direction::positiveZ;
+    case Direction::pX: return Direction::nX;
+    case Direction::nX: return Direction::pX;
+    case Direction::pY: return Direction::nY;
+    case Direction::nY: return Direction::pY;
+    case Direction::pZ: return Direction::nZ;
+    case Direction::nZ: return Direction::pZ;
 
-    default: return Direction::positiveX;
+    default: return Direction::pX;
     }
 }
 

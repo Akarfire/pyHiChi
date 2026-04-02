@@ -30,7 +30,8 @@ public:
     ~FieldExchanger();
 
     // Performs echange sequence iteration for node "rank" in the specified topology
-    // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY AT THE SAME TIME!
+    // BLOCKING
+    // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
     void PerformExchangeSequence(pfc::FP* data, const class Topology& topology, int rank, MPI_Comm communicator = MPI_COMM_WORLD);
 };
 }

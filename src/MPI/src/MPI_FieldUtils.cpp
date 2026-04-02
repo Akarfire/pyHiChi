@@ -29,37 +29,37 @@ void FieldUtils::resolveSendParameters(int out_sizes[3], int out_sub_sizes[3], i
     // Specifying outputs based on direction
     switch (direction)
     {
-    case Direction::positiveX:
+    case Direction::pX:
         // Second to last YZ plane
         out_sub_sizes[0] = 1;
         out_starts[0] = num_cells.x - 2;
         break;
 
-    case Direction::negativeX:
+    case Direction::nX:
         // Second YZ plane
         out_sub_sizes[0] = 1;
         out_starts[0] = 1;
         break;
 
-    case Direction::positiveY:
+    case Direction::pY:
         // Second to last XZ plane
         out_sub_sizes[1] = 1;
         out_starts[1] = num_cells.y - 2;
         break;
 
-    case Direction::negativeY:
+    case Direction::nY:
         // Second XZ plane
         out_sub_sizes[1] = 1;
         out_starts[1] = 1;
         break;
 
-    case Direction::positiveZ:
+    case Direction::pZ:
         // Second to last XY plane
         out_sub_sizes[2] = 1;
         out_starts[2] = num_cells.z - 2;
         break;
 
-    case Direction::negativeZ:
+    case Direction::nZ:
         // Second XY plane
         out_sub_sizes[2] = 1;
         out_starts[2] = 1;
@@ -89,37 +89,37 @@ void FieldUtils::resolveRecvParameters(int out_sizes[3], int out_sub_sizes[3], i
     // IMPORTANT: Direction is specified relative to the SENDER
     switch (direction)
     {
-    case Direction::positiveX:
+    case Direction::pX:
         // First YZ plane
         out_sub_sizes[0] = 1;
         out_starts[0] = 0;
         break;
 
-    case Direction::negativeX:
+    case Direction::nX:
         // Last YZ plane
         out_sub_sizes[0] = 1;
         out_starts[0] = num_cells.x - 1;
         break;
 
-    case Direction::positiveY:
+    case Direction::pY:
         // First XZ plane
         out_sub_sizes[1] = 1;
         out_starts[1] = 0;
         break;
 
-    case Direction::negativeY:
+    case Direction::nY:
         // Last XZ plane
         out_sub_sizes[1] = 1;
         out_starts[1] = num_cells.y - 1;
         break;
 
-    case Direction::positiveZ:
+    case Direction::pZ:
         // First XY plane
         out_sub_sizes[2] = 1;
         out_starts[2] = 0;
         break;
 
-    case Direction::negativeZ:
+    case Direction::nZ:
         // Last XY plane
         out_sub_sizes[2] = 1;
         out_starts[2] = num_cells.z - 1;
