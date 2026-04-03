@@ -44,13 +44,14 @@ private:
     int convertIndexToRank(pfc::Int3 index) const { return convertIndexToRank(index.x, index.y, index.z); }
 
     // Converts a rank index into a 3D index
+    // Return MPI_INVALID_SECTION if rank is invalid
     pfc::Int3 convertRankToIndex(int rank) const;
+
+public:
 
     static bool doesLoopOverX(const LoopType& loop_type);
     static bool doesLoopOverY(const LoopType& loop_type);
     static bool doesLoopOverZ(const LoopType& loop_type);
-
-public:
 
     // Returns sections
     const pfc::Int3& getSections() const { return sections_; }
@@ -61,13 +62,21 @@ public:
     // Returns the number of nodes in this topology
     int getSize() const { return size; }
 
+    // Returns rank of the node, that is responsible for processing the specified section
+    // Returns MPI_INVALID_RANK if at least one of coordinates is MPI_INVALID_RANK
+    int getResponsibleNode(const pfc::Int3& section) const { return convertIndexToRank(section); }
+
+    // Returns a 3D index of the section, assigned to a node with the specified rank
+    // Return MPI_INVALID_SECTION if rank is invalid
+    pfc::Int3 getNodeSection(int rank) const { return convertRankToIndex(rank); }
+
     // Returns rank of the node's neighbor in the specified direction
     // MPI_INVALID_RANK if no neighbor exists
     int getNeighbor(int node_rank, Direction direction) const;
 
     // Returns rank of the node's neighbor with the specified offset
     // MPI_INVALID_RANK if no neighbor exists
-    int getNeighbor(int node_rank, pfc::Int3 offset) const;
+    int getNeighbor(int node_rank, const pfc::Int3& offset) const;
 };
 
 }

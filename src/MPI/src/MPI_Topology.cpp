@@ -26,8 +26,8 @@ int Topology::convertIndexToRank(int x, int y, int z) const
  // Converts a rank index into a 3D index
 pfc::Int3 Topology::convertRankToIndex(int rank) const
 {
-    if (rank == MPI_INVALID_RANK)
-        return pfc::Int3(MPI_INVALID_RANK, MPI_INVALID_RANK, MPI_INVALID_RANK);
+    if (rank < 0 || rank >= size)
+        return MPI_INVALID_SECTION;
     
     pfc::Int3 index;
 
@@ -70,12 +70,15 @@ int Topology::getNeighbor(int node_rank, Direction direction) const
 
 // Returns rank of the node's neighbor with the specified offset
 // MPI_INVALID_RANK if no neighbor exists
-int Topology::getNeighbor(int node_rank, pfc::Int3 offset) const
+int Topology::getNeighbor(int node_rank, const pfc::Int3& offset) const
 {
     if (node_rank == MPI_INVALID_RANK)
         return MPI_INVALID_RANK;
 
     pfc::Int3 index = convertRankToIndex(node_rank);
+    if (index == MPI_INVALID_SECTION)
+        return MPI_INVALID_RANK;
+
     pfc::Int3 neighbor_index = index + offset;
     
     // Validating and looping neighbor_index
