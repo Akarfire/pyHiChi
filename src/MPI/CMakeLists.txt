@@ -10,6 +10,7 @@ add_executable(mpi
     src/MPI_Topology.cpp
     src/MPI_FieldUtils.cpp
     src/MPI_FieldExchanger.cpp
+    src/MPI_GridSlicer.cpp
     src/Main.cpp)
 
 target_link_libraries(mpi
