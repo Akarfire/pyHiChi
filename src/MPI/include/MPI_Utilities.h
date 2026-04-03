@@ -6,10 +6,14 @@
 #include "FP.h"
 #include "Vectors.h"
 
-#define MPI_INVALID_RANK -1
-
 namespace mpi
 {
+
+// Invalid rank id
+static int MPI_INVALID_RANK = -1;
+
+// Invalid topological section value
+static pfc::Int3 MPI_INVALID_SECTION = pfc::Int3(MPI_INVALID_RANK, MPI_INVALID_RANK, MPI_INVALID_RANK);
 
 // Defines the direction, in which the transmission will be performed (From sender to receiver)
 enum class Direction
@@ -30,5 +34,4 @@ static const pfc::Int3 DirectionToOffset[6] =
 
 // Returns the inverse of the specified direction
 Direction invertDirection(const Direction& direction);
-
 }
