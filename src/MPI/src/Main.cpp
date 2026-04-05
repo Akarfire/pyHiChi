@@ -87,10 +87,10 @@ void debugPrintGrid_xyplane(std::unique_ptr<GridType>& grid, int z)
 {
     Int3 size = grid->numCells;
 
-    for (int i = 0; i < size.x; i++)
+    for (int j = 0; j < size.y; j++)
     {
         std::string line = "";
-        for (int j = 0; j < size.y; j++)
+        for (int i = 0; i < size.x; i++) 
             line += std::to_string(grid->testFieldComponent(i, j, z)) + ", ";
         std::cout << line << std::endl;
     }
@@ -102,11 +102,27 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
 {
     Int3 size = grid->numCells;
 
-    for (int i = 0; i < size.z; i++)
+    for (int j = 0; j < size.x; j++)
     {
         std::string line = "";
-        for (int j = 0; j < size.x; j++)
+        for (int i = 0; i < size.z; i++)
             line += std::to_string(grid->testFieldComponent(j, y, i)) + ", ";
+        std::cout << line << std::endl;
+    }
+
+    std::cout << std::endl << std::endl;
+}
+
+
+void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
+{
+    Int3 size = grid->numCells;
+
+    for (int j = 0; j < size.y; j++)
+    {
+        std::string line = "";
+        for (int i = 0; i < size.x; i++)
+            line += "(" + std::to_string(i) + " " + std::to_string(j) + "), ";
         std::cout << line << std::endl;
     }
 
@@ -115,33 +131,52 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
 
 int main(int argc, char** argv)
 {
+    Int3 gridSize = Int3(6, 6, 4);
+    FP3 minCoords = FP3(0, 0, 0);
+    FP3 maxCoords = FP3(1, 1, 1);
+    FP3 gridStep = (maxCoords - minCoords) / (FP3)gridSize;
+
+    // MPI initialization
     MPI_Init(&argc, &argv);
 
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    Int3 gridSize = Int3(4, 4, 4);
-    FP3 minCoords = FP3(0, 0, 0);
-    FP3 maxCoords = FP3(1, 1, 1);
-    FP3 gridStep = (maxCoords - minCoords) / (FP3)gridSize;
+    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
+
+    std::vector<int> divisions[3] = {
+        {2, 4},
+        {4},
+        {}
+    };
+
+    // Splitting main grid
+    Int3 localGridSize;
+    FP3 localMinCoords;
+    mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, 
+                                            minCoords, gridSize, gridStep, 
+                                            divisions, rank, topology);
 
     std::unique_ptr<GridType> grid;
-    grid.reset(new GridType(gridSize, minCoords, gridStep, gridSize));
+    grid.reset(new GridType(localGridSize, localMinCoords, gridStep, localGridSize));
 
     initializeGrid(grid, rank);
 
-    // MPI initialization
-    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
     mpi::FieldExchanger exchanger(grid->numCells);
 
     // Debug print
     for (int r = 0; r < size; r++)
     {
         if (rank == r)
+        {
+            std::cout << "RANK " << rank << std::endl;
             debugPrintGrid_xyplane(grid, 0);
+        }
         MPI_Barrier(MPI_COMM_WORLD);
     }
+
+    MPI_Barrier(MPI_COMM_WORLD);
 
     // Exchange logic
     exchanger.PerformExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
@@ -159,7 +194,10 @@ int main(int argc, char** argv)
     for (int r = 0; r < size; r++)
     {
         if (rank == r)
-            debugPrintGrid_xyplane(grid, 0 );
+        {
+            std::cout << "RANK " << rank << std::endl;
+            debugPrintGrid_xyplane(grid, 0);
+        }
         MPI_Barrier(MPI_COMM_WORLD);
     }
 
