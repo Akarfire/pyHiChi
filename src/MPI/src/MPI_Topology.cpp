@@ -85,11 +85,11 @@ int Topology::getNeighbor(int node_rank, const pfc::Int3& offset) const
     neighbor_index.x = (neighbor_index.x >= 0) ? (neighbor_index.x) : ( doesLoopOverX(loopType) ? (sections_.x + neighbor_index.x) : MPI_INVALID_RANK );
     neighbor_index.x = (neighbor_index.x < sections_.x) ? (neighbor_index.x) : ( doesLoopOverX(loopType) ? (neighbor_index.x - sections_.x) : MPI_INVALID_RANK );
 
-    neighbor_index.y = (neighbor_index.y >= 0) ? (neighbor_index.y) : ( doesLoopOverX(loopType) ? (sections_.y + neighbor_index.y) : MPI_INVALID_RANK );
-    neighbor_index.y = (neighbor_index.y < sections_.y) ? (neighbor_index.y) : ( doesLoopOverX(loopType) ? (neighbor_index.y - sections_.y) : MPI_INVALID_RANK );
+    neighbor_index.y = (neighbor_index.y >= 0) ? (neighbor_index.y) : ( doesLoopOverY(loopType) ? (sections_.y + neighbor_index.y) : MPI_INVALID_RANK );
+    neighbor_index.y = (neighbor_index.y < sections_.y) ? (neighbor_index.y) : ( doesLoopOverY(loopType) ? (neighbor_index.y - sections_.y) : MPI_INVALID_RANK );
 
-    neighbor_index.z = (neighbor_index.z >= 0) ? (neighbor_index.z) : ( doesLoopOverX(loopType) ? (sections_.z + neighbor_index.z) : MPI_INVALID_RANK );
-    neighbor_index.z = (neighbor_index.z < sections_.z) ? (neighbor_index.z) : ( doesLoopOverX(loopType) ? (neighbor_index.z - sections_.z) : MPI_INVALID_RANK );
+    neighbor_index.z = (neighbor_index.z >= 0) ? (neighbor_index.z) : ( doesLoopOverZ(loopType) ? (sections_.z + neighbor_index.z) : MPI_INVALID_RANK );
+    neighbor_index.z = (neighbor_index.z < sections_.z) ? (neighbor_index.z) : ( doesLoopOverZ(loopType) ? (neighbor_index.z - sections_.z) : MPI_INVALID_RANK );
 
     // Converting neighbor_index to rank
     return convertIndexToRank(neighbor_index);
