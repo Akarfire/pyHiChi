@@ -5,3 +5,4 @@
 #include "MPI_Topology.h"
 #include "MPI_FieldUtils.h"
 #include "MPI_FieldExchanger.h"
+#include "MPI_GridSlicer.h"
