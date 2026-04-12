@@ -25,7 +25,7 @@ private:
 public:
 
     // Constructor that will create types for sending and recieving 
-    FieldExchanger(const pfc::Int3& grid_num_cells);
+    FieldExchanger(const pfc::Int3& grid_num_cells, int num_external_cells);
     // Frees created mpi types
     ~FieldExchanger();
 

@@ -163,7 +163,8 @@ int main(int argc, char** argv)
 
     initializeGrid(grid, rank);
 
-    mpi::FieldExchanger exchanger(grid->numCells);
+    std::cout << "RANK " << rank << " " << grid->numExternalCells << std::endl;
+    mpi::FieldExchanger exchanger(grid->numCells, grid->numExternalCells);
 
     // Debug print
     for (int r = 0; r < size; r++)

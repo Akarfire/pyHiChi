@@ -7,7 +7,7 @@ namespace mpi
 {
 
 // Constructor that will create types for sending and recieving 
-FieldExchanger::FieldExchanger(const pfc::Int3& grid_num_cells)
+FieldExchanger::FieldExchanger(const pfc::Int3& grid_num_cells, int num_external_cells)
 {
     // Creating types
     for (int d = 0; d < 6; d++)
@@ -16,12 +16,12 @@ FieldExchanger::FieldExchanger(const pfc::Int3& grid_num_cells)
 
         // Send
         MPI_Datatype send_type;
-        FieldUtils::defineTransmission_Send(send_type, grid_num_cells, direction);
+        FieldUtils::defineTransmission_Send(send_type, grid_num_cells, num_external_cells, direction);
         sendTypes.push_back(send_type);
 
         // Recv
         MPI_Datatype recv_type;
-        FieldUtils::defineTransmission_Recv(recv_type, grid_num_cells, direction);
+        FieldUtils::defineTransmission_Recv(recv_type, grid_num_cells, num_external_cells, direction);
         recvTypes.push_back(recv_type);
     }
 }
