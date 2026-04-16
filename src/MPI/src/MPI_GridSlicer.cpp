@@ -14,8 +14,6 @@ void GridSlicer::getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size,
     pfc::Int3 node = topology.getNodeSection(rank);
     const pfc::Int3& sections = topology.getSections();
 
-    Topology::LoopType loopType = topology.getLoopType();
-
     pfc::Int3 lb;
     pfc::Int3 rb;
 
