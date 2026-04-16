@@ -4,6 +4,7 @@ include_directories(
     ../Core/include
     ../Modules/Particle/include
     ../Modules/Field/include
+    ../MPI/include
     ${FFT_INCLUDES})
 
 add_executable(tests
@@ -29,25 +30,32 @@ add_executable(tests
     src/testThinning.cpp
     src/testVectors.cpp
     src/testVectorsProxy.cpp
+    src/testMPI_Topology.cpp
     src/TestingUtility.cpp
-    src/Main.cpp)
+    src/Main.cpp
+    
+    ../MPI/src/MPI_Topology.cpp
+    )
 
 if (APPLE)
     target_link_libraries(tests
         -Wl,-all_load
         gtest
         ${FFT_LIBS}
-        -Wl,-noall_load)
+        -Wl,-noall_load
+        MPI::MPI_CXX)
 elseif (UNIX)
     target_link_libraries(tests
         -Wl,-whole-archive
         gtest
         -Wl,--start-group ${FFT_LIBS} -Wl,--end-group
-        -Wl,-no-whole-archive)
+        -Wl,-no-whole-archive
+        MPI::MPI_CXX)
 else()
     target_link_libraries(tests
         gtest
-        ${FFT_LIBS})
+        ${FFT_LIBS}
+        MPI::MPI_CXX)
 endif()
 
 set_target_properties(gtest PROPERTIES FOLDER UnitTests)
