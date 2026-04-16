@@ -26,13 +26,14 @@ public:
     // Constructing an abstracted MPI topology based on the number of nodes (ranks) and the desired topology type
     // `sections` - Number of sections for each axis
     Topology(const pfc::Int3& sections, LoopType loop_type, int node_count);
+    Topology(const pfc::Int3& sections, bool loop_mask[3], int node_count);
 
 private:
 
     // Number of sections for each axis
     pfc::Int3 sections_;
     // Topology looping type
-    LoopType loopType;
+    bool loop[3] = {false, false, false};
     // Number of nodes in this topology
     int size;
 
@@ -57,7 +58,7 @@ public:
     const pfc::Int3& getSections() const { return sections_; }
 
     // Returns the type of looping used for this topology
-    LoopType getLoopType() const { return loopType; }
+    void getLoopMask(bool out_loop_mask[3]) const;
 
     // Returns the number of nodes in this topology
     int getSize() const { return size; }
