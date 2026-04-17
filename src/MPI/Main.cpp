@@ -143,7 +143,7 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::loopX, size);
+    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::LoopX, size);
 
     std::vector<int> divisions[3] = {
         {2, 4},
