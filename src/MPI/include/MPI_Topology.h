@@ -17,9 +17,9 @@ public:
     enum class LoopType
     {
         None,
-        loopX, loopY, loopZ,
-        loopXY, loopYZ, loopXZ,
-        loopXYZ
+        LoopX, LoopY, LoopZ,
+        LoopXY, LoopYZ, LoopXZ,
+        LoopXYZ
     };
 
 public:

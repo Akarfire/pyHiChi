@@ -62,24 +62,24 @@ void Topology::getLoopMask(bool out_loop_mask[3]) const
 
 bool Topology::doesLoopOverX(const LoopType& loop_type)
 {
-    return loop_type == LoopType::loopX 
-        || loop_type == LoopType::loopXY 
-        || loop_type == LoopType::loopXZ 
-        || loop_type == LoopType::loopXYZ;
+    return loop_type == LoopType::LoopX 
+        || loop_type == LoopType::LoopXY 
+        || loop_type == LoopType::LoopXZ 
+        || loop_type == LoopType::LoopXYZ;
 }
 bool Topology::doesLoopOverY(const LoopType& loop_type)
 {
-    return loop_type == LoopType::loopY
-        || loop_type == LoopType::loopXY 
-        || loop_type == LoopType::loopYZ 
-        || loop_type == LoopType::loopXYZ;
+    return loop_type == LoopType::LoopY
+        || loop_type == LoopType::LoopXY 
+        || loop_type == LoopType::LoopYZ 
+        || loop_type == LoopType::LoopXYZ;
 }
 bool Topology::doesLoopOverZ(const LoopType& loop_type)
 {
-    return loop_type == LoopType::loopZ
-        || loop_type == LoopType::loopXZ 
-        || loop_type == LoopType::loopYZ 
-        || loop_type == LoopType::loopXYZ;
+    return loop_type == LoopType::LoopZ
+        || loop_type == LoopType::LoopXZ 
+        || loop_type == LoopType::LoopYZ 
+        || loop_type == LoopType::LoopXYZ;
 }
 
 
