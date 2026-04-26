@@ -13,6 +13,10 @@ file(GLOB_RECURSE MPI_SOURCES "../MPI/src/*.cpp")
 add_executable(mpi_tests
     src/testMPI_Topology.cpp
     src/testMPI_FieldExchanger.cpp
+    src/testMPI_GridSlicer.cpp
+    src/testMPI_FieldSolver.cpp
+
+    src/TestingUtility.cpp
 
     ${MPI_SOURCES}
 
@@ -22,6 +26,7 @@ add_executable(mpi_tests
 target_link_libraries(mpi_tests
     gtest
     MPI::MPI_CXX    
+    ${FFT_LIBS}
 )
 
 set_target_properties(gtest PROPERTIES FOLDER UnitTests)
