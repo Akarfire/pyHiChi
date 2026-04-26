@@ -23,8 +23,8 @@ void GridSlicer::getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size,
     lb.y = (node.y - 1 < 0) ? 0 : (divisions[1][node.y - 1]);
     rb.y = (node.y == sections.y - 1) ? main_size.y : (divisions[1][node.y]);
 
-    lb.z = (node.z - 1 < 0) ? 0 : (divisions[1][node.z - 1]);
-    rb.z = (node.z == sections.z - 1) ? main_size.z : (divisions[1][node.z]);
+    lb.z = (node.z - 1 < 0) ? 0 : (divisions[2][node.z - 1]);
+    rb.z = (node.z == sections.z - 1) ? main_size.z : (divisions[2][node.z]);
 
     // Outputs
     out_origin = main_origin + step * lb;
