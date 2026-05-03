@@ -47,7 +47,7 @@ FieldExchanger::~FieldExchanger()
 // Performs echange sequence iteration for node "rank" in the specified topology
 // BLOCKING
 // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-void FieldExchanger::performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator = MPI_COMM_WORLD)
+void FieldExchanger::performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator)
 {
     int posDirection = static_cast<int>(axis) * 2;
     int negDirection = posDirection + 1;
