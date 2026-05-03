@@ -1,10 +1,12 @@
+#pragma once
+
 #include "FieldBoundaryCondition.h"
 #include "MPI_FieldExchanger.h"
 #include "MPI_Topology.h"
 
 namespace pfc
 {
-    class MPI_FieldBoundaryConditions : public FieldBoundaryCondition<YeeGrid>
+    class MPI_FieldBoundaryCondition : public FieldBoundaryCondition<YeeGrid>
     {
     protected:
         std::shared_ptr<mpi::FieldExchanger> exchanger;
@@ -13,7 +15,7 @@ namespace pfc
 
     public:
 
-        MPI_FieldBoundaryConditions(YeeGrid* grid,
+        MPI_FieldBoundaryCondition(YeeGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis, 
             std::shared_ptr<mpi::FieldExchanger> fieldExchanger,
             std::shared_ptr<mpi::Topology> topology, int mpi_rank) :
@@ -23,7 +25,7 @@ namespace pfc
         {}
 
         // constructor for loading
-        explicit MPI_FieldBoundaryConditions(YeeGrid* grid,
+        explicit MPI_FieldBoundaryCondition(YeeGrid* grid,
             Int3 leftBorderIndex, Int3 rightBorderIndex, 
             std::shared_ptr<mpi::FieldExchanger> fieldExchanger,
             std::shared_ptr<mpi::Topology> topology, int mpi_rank) :
@@ -37,18 +39,18 @@ namespace pfc
 
         FieldBoundaryCondition<YeeGrid>* createInstance(
             YeeGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) override {
-            return new MPI_FieldBoundaryConditions(grid, leftBorderIndex, rightBorderIndex, axis, exchanger, topology, rank);
+            return new MPI_FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis, exchanger, topology, rank);
         }
     };
 
-    inline void MPI_FieldBoundaryConditions::generateE(FP time)
+    inline void MPI_FieldBoundaryCondition::generateE(FP time)
     {
         exchanger->performExchangeOverAxis(grid->Ex.getData(), axis, *topology, rank, MPI_COMM_WORLD);
         exchanger->performExchangeOverAxis(grid->Ey.getData(), axis, *topology, rank, MPI_COMM_WORLD);
         exchanger->performExchangeOverAxis(grid->Ez.getData(), axis, *topology, rank, MPI_COMM_WORLD);
     }
 
-    inline void MPI_FieldBoundaryConditions::generateB(FP time)
+    inline void MPI_FieldBoundaryCondition::generateB(FP time)
     {
         exchanger->performExchangeOverAxis(grid->Bx.getData(), axis, *topology, rank, MPI_COMM_WORLD);
         exchanger->performExchangeOverAxis(grid->By.getData(), axis, *topology, rank, MPI_COMM_WORLD);
