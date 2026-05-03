@@ -402,15 +402,15 @@ public:
 
     bool compareBC() {
         PeriodicalBCType* bc1[3] = {
-            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[0].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[1].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[2].get())
+            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[0].first.get()),
+            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[1].first.get()),
+            dynamic_cast<PeriodicalBCType*>(this->solver->boundaryConditions[2].first.get())
         };
 
         PeriodicalBCType* bc2[3] = {
-            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[0].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[1].get()),
-            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[2].get())
+            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[0].first.get()),
+            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[1].first.get()),
+            dynamic_cast<PeriodicalBCType*>(this->solver2->boundaryConditions[2].first.get())
         };
 
         if (!bc1[0] || !bc1[1] || !bc1[2]) return false;
