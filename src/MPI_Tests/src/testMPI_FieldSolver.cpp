@@ -204,13 +204,13 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
         this->fieldSolver->updateFields();
 
         // MPI exchange sequence
-        this->fieldExchanger->PerformExchangeSequence(grid->Ex.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->PerformExchangeSequence(grid->Ey.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->PerformExchangeSequence(grid->Ez.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        this->fieldExchanger->performExchangeSequence(grid->Ex.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        this->fieldExchanger->performExchangeSequence(grid->Ey.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        this->fieldExchanger->performExchangeSequence(grid->Ez.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
 
-        this->fieldExchanger->PerformExchangeSequence(grid->Bx.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->PerformExchangeSequence(grid->By.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->PerformExchangeSequence(grid->Bz.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        this->fieldExchanger->performExchangeSequence(grid->Bx.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        this->fieldExchanger->performExchangeSequence(grid->By.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        this->fieldExchanger->performExchangeSequence(grid->Bz.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
     }
 
     FP finalT = this->fieldSolver->dt * this->numSteps;

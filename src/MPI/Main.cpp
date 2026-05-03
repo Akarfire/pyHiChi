@@ -180,13 +180,13 @@ int main(int argc, char** argv)
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Exchange logic
-    exchanger.PerformExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.PerformExchangeSequence(grid->Ey.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.PerformExchangeSequence(grid->Ez.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Ey.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Ez.getData(), topology, rank, MPI_COMM_WORLD);
 
-    exchanger.PerformExchangeSequence(grid->Bx.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.PerformExchangeSequence(grid->By.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.PerformExchangeSequence(grid->Bz.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Bx.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->By.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Bz.getData(), topology, rank, MPI_COMM_WORLD);
 
     if (rank == 0)
         std::cout << "------------------------------------------------------------------------" << std::endl << std::endl << std::endl;

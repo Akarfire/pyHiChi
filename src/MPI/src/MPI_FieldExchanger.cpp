@@ -43,11 +43,15 @@ FieldExchanger::~FieldExchanger()
         }
 }
 
+
 // Performs echange sequence iteration for node "rank" in the specified topology
-// MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY AT THE SAME TIME!
-void FieldExchanger::PerformExchangeSequence(pfc::FP* data, const Topology& topology, int rank, MPI_Comm communicator)
+// BLOCKING
+// MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
+void FieldExchanger::performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator = MPI_COMM_WORLD)
 {
-    for (int dir = 0; dir < 6; dir++)
+    int posDirection = static_cast<int>(axis) * 2;
+    int negDirection = posDirection + 1;
+    for (int dir = posDirection; dir <= negDirection; dir++)
     {
         Direction direction = static_cast<Direction>(dir);
 
@@ -76,6 +80,15 @@ void FieldExchanger::PerformExchangeSequence(pfc::FP* data, const Topology& topo
 
     // Sync nodes
     MPI_Barrier(communicator);
+}
+
+// Performs echange sequence iteration for node "rank" in the specified topology
+// MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY AT THE SAME TIME!
+void FieldExchanger::performExchangeSequence(pfc::FP* data, const Topology& topology, int rank, MPI_Comm communicator)
+{
+    performExchangeOverAxis(data, pfc::CoordinateEnum::x, topology, rank, communicator);
+    performExchangeOverAxis(data, pfc::CoordinateEnum::y, topology, rank, communicator);
+    performExchangeOverAxis(data, pfc::CoordinateEnum::z, topology, rank, communicator);
 }
 
 }
