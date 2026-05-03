@@ -37,8 +37,8 @@ public:
     const FP maxError = 1e-2;
 
     // MPI
-    std::unique_ptr<mpi::Topology> topology;
-    std::unique_ptr<mpi::FieldExchanger> fieldExchanger;
+    std::shared_ptr<mpi::Topology> topology;
+    std::shared_ptr<mpi::FieldExchanger> fieldExchanger;
 
     virtual void SetUp() {
         int mpi_rank;
@@ -55,7 +55,7 @@ public:
         if (mpi_rank >= topologySize)
             GTEST_SKIP() << "Rank " << mpi_rank << " is not required";
 
-        topology.reset(new mpi::Topology(sections, mpi::Topology::LoopType::None, mpi_size));
+        topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::LoopXYZ, mpi_size);
 
         Int3 mainGridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
@@ -87,13 +87,24 @@ public:
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
-        fieldExchanger.reset(new mpi::FieldExchanger(grid->numCells, grid->numExternalCells));
+        fieldExchanger = std::make_shared<mpi::FieldExchanger>(grid->numCells, grid->numExternalCells);
 
         this->timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(this->gridStep);
         this->numSteps = (int)((mainMaxCoords - mainMinCoords)[(int)axis] /
             (constants::c * this->timeStep) * 0.2);
 
         fieldSolver.reset(new FieldSolverType(this->grid.get(), this->timeStep));
+
+        mpi::BoundaryType boundaries[6] = { 
+            mpi::BoundaryType::Periodic, // +X
+            mpi::BoundaryType::Periodic, // -X
+            mpi::BoundaryType::Periodic, // +Y
+            mpi::BoundaryType::Periodic, // -Y
+            mpi::BoundaryType::Periodic, // +Z
+            mpi::BoundaryType::Periodic, // -Z
+        };
+        using BoundaryManager = mpi::FieldBoundaryManager<FieldSolverType, GridType, ReflectBoundaryConditionMonoDirectionFdtd>;
+        BoundaryManager::setupBoundaryConditions(fieldSolver, boundaries, topology, fieldExchanger, mpi_rank);
 
         initializeGrid();
     }
@@ -204,13 +215,13 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
         this->fieldSolver->updateFields();
 
         // MPI exchange sequence
-        this->fieldExchanger->performExchangeSequence(grid->Ex.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->performExchangeSequence(grid->Ey.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->performExchangeSequence(grid->Ez.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        // this->fieldExchanger->performExchangeSequence(grid->Ex.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        // this->fieldExchanger->performExchangeSequence(grid->Ey.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        // this->fieldExchanger->performExchangeSequence(grid->Ez.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
 
-        this->fieldExchanger->performExchangeSequence(grid->Bx.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->performExchangeSequence(grid->By.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        this->fieldExchanger->performExchangeSequence(grid->Bz.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        // this->fieldExchanger->performExchangeSequence(grid->Bx.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        // this->fieldExchanger->performExchangeSequence(grid->By.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
+        // this->fieldExchanger->performExchangeSequence(grid->Bz.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
     }
 
     FP finalT = this->fieldSolver->dt * this->numSteps;
