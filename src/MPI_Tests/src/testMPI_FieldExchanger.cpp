@@ -180,7 +180,7 @@ void testExchange(
     mpi::FieldExchanger exchanger(grid->numCells, numExternalCells);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    exchanger.PerformExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Check
