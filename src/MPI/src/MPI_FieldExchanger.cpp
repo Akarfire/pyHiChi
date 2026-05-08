@@ -9,6 +9,10 @@ namespace mpi
 // Constructor that will create types for sending and recieving 
 FieldExchanger::FieldExchanger(const pfc::Int3& grid_num_cells, int num_external_cells)
 {
+    // Lower limit for num_external_cells (for cases when num_external_cells is 0, for example in spectral solvers)
+    if (num_external_cells < 1)
+        num_external_cells = 1;
+
     // Creating types
     for (int d = 0; d < 6; d++)
     {
