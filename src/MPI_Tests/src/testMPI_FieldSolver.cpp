@@ -7,9 +7,6 @@
 #include "Psatd.h"
 #include "PsatdTimeStaggered.h"
 
-#include <iostream>
-#include <fstream>
-
 #include "HiChi_MPI.h"
 
 template <class TTypeDefinitionsFieldTest>
@@ -69,7 +66,7 @@ public:
 
         int div = mainGridSize.x / 4;
         std::vector<int> divisions[3] = {
-            {div, 2 * div, 3 * div}, 
+            {div, 2 * div, 3 * div},
             {}, 
             {}
         };
@@ -77,13 +74,6 @@ public:
                                                 mainMinCoords, mainGridSize, 
                                                 this->gridStep, divisions, 
                                                 mpi_rank, *topology);
-
-        // std::cout << "LOCAL SIZE: " << mpi_rank << " : " << this->gridSize.x << " " << this->gridSize.y << " " << this->gridSize.z << std::endl;
-        // std::cout << "LOCAL ORIGIN: " << mpi_rank << " : " << this->minCoords.x << " " << this->minCoords.y << " " << this->minCoords.z << std::endl;
-
-        // std::cout << "GLOBAL MIN: " << this->mainMinCoords.x << " " << this->mainMinCoords.y << " " << this->mainMinCoords.z << std::endl;
-        // std::cout << "GLOBAL MAX: " << this->mainMaxCoords.x << " " << this->mainMaxCoords.y << " " << this->mainMaxCoords.z << std::endl;
-        // std::cout << "GLOBAL SIZE: " << mainGridSize.x << " " << mainGridSize.y << " " << mainGridSize.z << std::endl;
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 
@@ -103,7 +93,7 @@ public:
             mpi::BoundaryType::Periodic, // +Z
             mpi::BoundaryType::Periodic, // -Z
         };
-        using BoundaryManager = mpi::FieldBoundaryManager<FieldSolverType, GridType, ReflectBoundaryConditionMonoDirectionFdtd>;
+        using BoundaryManager = mpi::FieldBoundaryManager<FieldSolverType, GridType, TTypeDefinitionsFieldTest::ReflectBoundaryConditionType>;
         BoundaryManager::setupBoundaryConditions(fieldSolver, boundaries, topology, fieldExchanger, mpi_rank);
 
         initializeGrid();
@@ -153,50 +143,35 @@ public:
     }
 };
 
-// #ifndef __USE_FFT__
+#ifndef __USE_FFT__
 
 typedef ::testing::Types <
-    // TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
-    // TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
-    // TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
-    TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>//,
-    // TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
-    // TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z>
 > types;
 
-// #else
+#else
 
-// typedef ::testing::Types <
-//     // TypeDefinitionsFieldTest<FDTD, 1, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<FDTD, 2, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::x>,
-//     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<FDTD, 3, CoordinateEnum::z>,
+typedef ::testing::Types <
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z>
 
-//     // TypeDefinitionsFieldTest<PSTD, 1, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<PSTD, 2, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::x>,
-//     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<PSTD, 3, CoordinateEnum::z>,
+    //MPI_TypeDefinitionsFieldTest<PSTD, void, 3, CoordinateEnum::x>
+    // MPI_TypeDefinitionsFieldTest<PSTD, void, 3, CoordinateEnum::y>,
+    // MPI_TypeDefinitionsFieldTest<PSTD, void, 3, CoordinateEnum::z>
 
-//     // TypeDefinitionsFieldTest<PSATD, 1, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<PSATD, 2, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::x>,
-//     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<PSATD, 3, CoordinateEnum::z>,
+    // MPI_TypeDefinitionsFieldTest<PSATD, void, 3, CoordinateEnum::x>,
+    // MPI_TypeDefinitionsFieldTest<PSATD, void, 3, CoordinateEnum::y>,
+    // MPI_TypeDefinitionsFieldTest<PSATD, void, 3, CoordinateEnum::z>,
 
-//     // TypeDefinitionsFieldTest<PSATDTimeStaggered, 1, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::x>,
-//     // TypeDefinitionsFieldTest<PSATDTimeStaggered, 2, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::x>,
-//     TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::y>,
-//     TypeDefinitionsFieldTest<PSATDTimeStaggered, 3, CoordinateEnum::z>
-// > types;
+    // MPI_TypeDefinitionsFieldTest<PSATDTimeStaggered, void, 3, CoordinateEnum::x>,
+    // MPI_TypeDefinitionsFieldTest<PSATDTimeStaggered, void, 3, CoordinateEnum::y>,
+    // MPI_TypeDefinitionsFieldTest<PSATDTimeStaggered, void, 3, CoordinateEnum::z>
+> types;
 
-// #endif
+#endif
 
 TYPED_TEST_CASE(MPI_FieldSolverTest, types);
 
@@ -208,20 +183,9 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    //this->fieldSolver->setPeriodicalBoundaryConditions();
-
     for (int step = 0; step < this->numSteps; ++step)
     {
         this->fieldSolver->updateFields();
-
-        // MPI exchange sequence
-        // this->fieldExchanger->performExchangeSequence(grid->Ex.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        // this->fieldExchanger->performExchangeSequence(grid->Ey.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        // this->fieldExchanger->performExchangeSequence(grid->Ez.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-
-        // this->fieldExchanger->performExchangeSequence(grid->Bx.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        // this->fieldExchanger->performExchangeSequence(grid->By.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
-        // this->fieldExchanger->performExchangeSequence(grid->Bz.getData(), *(this->topology), mpi_rank, MPI_COMM_WORLD);
     }
 
     FP finalT = this->fieldSolver->dt * this->numSteps;
@@ -238,8 +202,6 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
         for (int j = begin.y; j < end.y; ++j)
             for (int k = begin.z; k < end.z; ++k)
             {
-                //int j = 0;
-
                 FP3 expectedE, actualE;
                 FP3 coords = this->grid->ExPosition(i, j, k);
                 expectedE.x = this->eFunc(coords.x, coords.y, coords.z, finalT).x;
@@ -250,16 +212,6 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
                 actualE.x = this->grid->Ex(i, j, k);
                 actualE.y = this->grid->Ey(i, j, k);
                 actualE.z = this->grid->Ez(i, j, k);
-
-                // if (abs(expectedE.norm() - actualE.norm()) > this->maxError)
-                // {
-                        file << mpi_rank << " | " << coords.x << " | " << coords.y << " | " << coords.z << " | " << actualE.x - expectedE.x << std::endl;
-                // }
-                    
-                // else
-                // {
-                //     file << mpi_rank << " | " << coords.x << " | " << coords.y << " | " << coords.z << " | " << expectedE.x << std::endl;
-                // }
                     
                 EXPECT_NEAR(expectedE.norm(), actualE.norm(), this->maxError);
             }
@@ -268,8 +220,6 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
         for (int j = begin.y; j < end.y; ++j)
             for (int k = begin.z; k < end.z; ++k)
             {
-                //int j = 0;
-
                 FP3 expectedB, actualB;
                 FP3 coords = this->grid->BxPosition(i, j, k);
                 expectedB.x = this->bFunc(coords.x, coords.y, coords.z, finalT).x;
@@ -281,7 +231,5 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
                 actualB.y = this->grid->By(i, j, k);
                 actualB.z = this->grid->Bz(i, j, k);
                 EXPECT_NEAR(expectedB.norm(), actualB.norm(), this->maxError);
-
-                //file << mpi_rank << " | " << coords.x << " | " << coords.y << " | " << coords.z << " | " << actualB.x - expectedB.x << std::endl;
             }
 }
