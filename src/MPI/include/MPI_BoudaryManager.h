@@ -6,6 +6,8 @@
 
 #include "FieldSolver.h"
 
+#include <type_traits>
+
 namespace mpi
 {
 
@@ -58,8 +60,9 @@ public:
                 // or in cases when the opposite direction has a diferent boundary condition
                 if (inverted_boundary_ptr.get() == nullptr || inverted_neighbor == MPI_INVALID_RANK)
                 {    
-                    boundary_ptr.reset(new pfc::MPI_FieldBoundaryCondition(fieldSolver->grid, fieldSolver->domainIndexBegin, 
-                                                                           fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), fieldExchanger, topology, rank));
+                    boundary_ptr.reset(new pfc::MPI_FieldBoundaryCondition<GridType>(fieldSolver->grid, fieldSolver->domainIndexBegin, 
+                                                                                     fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), 
+                                                                                     fieldExchanger, topology, rank));
                 }
             }
 
@@ -72,8 +75,9 @@ public:
                     throw(std::runtime_error("MPI boundary condition does not match topoplogy looping configuration!"));
                     break;
                 case BoundaryType::Reflect:
-                    boundary_ptr.reset(new MonoDirectionReflectBoundaryConditionType(fieldSolver->grid, fieldSolver->domainIndexBegin, 
-                                                            fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), first /* <- bool positiveDirection */));
+                    if constexpr (!std::is_same_v<MonoDirectionReflectBoundaryConditionType, void>) // For spectral solvers that do not have reflective boundary conditions
+                        boundary_ptr.reset(new MonoDirectionReflectBoundaryConditionType(fieldSolver->grid, fieldSolver->domainIndexBegin, 
+                                                                fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), first /* <- bool positiveDirection */));
                 default: break;
                 }
             }
