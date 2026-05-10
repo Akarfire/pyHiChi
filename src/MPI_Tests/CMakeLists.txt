@@ -15,6 +15,7 @@ add_executable(mpi_tests
     src/testMPI_FieldExchanger.cpp
     src/testMPI_GridSlicer.cpp
     src/testMPI_FieldSolver.cpp
+    src/testMPI_BoundaryConditions.cpp
 
     src/TestingUtility.cpp
 
