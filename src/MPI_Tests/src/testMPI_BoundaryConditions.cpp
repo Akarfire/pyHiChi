@@ -188,6 +188,11 @@ public:
             mpi::BoundaryType::Periodic, // +Z
             mpi::BoundaryType::Periodic, // -Z
         };
+
+        int reflectIndex = static_cast<int>(axis) * 2;
+        boundaries[reflectIndex] = mpi::BoundaryType::Reflect;
+        boundaries[reflectIndex + 1] = mpi::BoundaryType::Reflect;
+
         using BoundaryManager = mpi::FieldBoundaryManager<FieldSolverType, GridType, TTypeDefinitionsFieldTest::ReflectBoundaryConditionType>;
         BoundaryManager::setupBoundaryConditions(this->fieldSolver, boundaries, this->topology, this->fieldExchanger, mpi_rank);
     }
