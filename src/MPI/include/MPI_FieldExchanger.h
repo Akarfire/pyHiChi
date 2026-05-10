@@ -33,12 +33,12 @@ public:
     // Performs echange sequence iteration for node "rank" in the specified topology
     // BLOCKING
     // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-    void performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator = MPI_COMM_WORLD);
+    void performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator);
 
 
     // Performs echange sequence iteration over every axis for node "rank" in the specified topology
     // BLOCKING
     // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-    void performExchangeSequence(pfc::FP* data, const class Topology& topology, int rank, MPI_Comm communicator = MPI_COMM_WORLD);
+    void performExchangeSequence(pfc::FP* data, const class Topology& topology, int rank, MPI_Comm communicator);
 };
 }

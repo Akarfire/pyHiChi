@@ -28,6 +28,9 @@ public:
     Topology(const pfc::Int3& sections, LoopType loop_type, int node_count);
     Topology(const pfc::Int3& sections, bool loop_mask[3], int node_count);
 
+    // Frees mpi communicator
+    ~Topology();
+
 private:
 
     // Number of sections for each axis
@@ -36,6 +39,12 @@ private:
     bool loop[3] = {false, false, false};
     // Number of nodes in this topology
     int size;
+
+    // MPI Communicator for processes that participate in this topology
+    MPI_Comm communicator = MPI_COMM_NULL;
+
+    // Separates a topology communicator from MPI_COMM_WORLD
+    void initCommunicator();
 
     // Converts a 3D index into a 1D index
     // Returns MPI_INVALID_RANK if at least one of coordinates is MPI_INVALID_RANK
@@ -78,6 +87,15 @@ public:
     // Returns rank of the node's neighbor with the specified offset
     // MPI_INVALID_RANK if no neighbor exists
     int getNeighbor(int node_rank, const pfc::Int3& offset) const;
+
+
+    // MPI Communicator for processes that participate in this topology
+    // NOTE: Depends on the rank this method is executed at
+    MPI_Comm getTopologyCommunicator() { return communicator; }
+
+    // Whether this rank participates in topology or not
+    // NOTE: Depends on the rank this method is executed at
+    bool isValidOnThisRank() { return communicator != MPI_COMM_NULL; }
 };
 
 }

@@ -38,21 +38,29 @@ public:
     std::shared_ptr<mpi::FieldExchanger> fieldExchanger;
 
     virtual void SetUp() {
-        int mpi_rank;
         int mpi_size;
-        MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+        
         MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
         Int3 sections = Int3(4, 1, 1);
         int topologySize = sections.x * sections.y * sections.z;
 
         if (topologySize > mpi_size)
+        {
             GTEST_SKIP() << "Not enough processes for FieldSolverTest";
-
-        if (mpi_rank >= topologySize)
-            GTEST_SKIP() << "Rank " << mpi_rank << " is not required";
+            return;
+        }
 
         topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::LoopXYZ, mpi_size);
+
+        if (!topology->isValidOnThisRank())
+        {
+            GTEST_SKIP() << "This rank is not required";
+            return;
+        }
+
+        int mpi_rank;
+        MPI_Comm_rank(topology->getTopologyCommunicator(), &mpi_rank);
 
         Int3 mainGridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) {
@@ -178,11 +186,6 @@ TYPED_TEST_CASE(MPI_FieldSolverTest, types);
 
 TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
 {
-    int mpi_rank;
-    int mpi_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
     for (int step = 0; step < this->numSteps; ++step)
     {
         this->fieldSolver->updateFields();
@@ -192,11 +195,6 @@ TYPED_TEST(MPI_FieldSolverTest, PeriodicalFieldSolverTest)
 
     Int3 begin = this->fieldSolver->internalIndexBegin;
     Int3 end = this->fieldSolver->internalIndexEnd;
-
-    std::string file_name = "debug_" + std::to_string(mpi_rank) + ".txt";
-    std::ofstream file(file_name);
-    if (mpi_rank == 0)
-        file << "rank | x | y | z | result" << std::endl;
 
     for (int i = begin.x; i < end.x; ++i)
         for (int j = begin.y; j < end.y; ++j)

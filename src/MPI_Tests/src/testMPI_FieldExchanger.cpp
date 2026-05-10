@@ -159,19 +159,24 @@ void testExchange(
     MPI_Barrier(MPI_COMM_WORLD);
 
     // Checking mpi size
-    int rank, real_size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int real_size;
     MPI_Comm_size(MPI_COMM_WORLD, &real_size);
 
     int size = topologySize.x * topologySize.y * topologySize.z;
     if (real_size < size)
         GTEST_SKIP() << "Not enough processes " << real_size << "/" << size;
 
-    if (rank >= size)
-        EXPECT_TRUE(true);
-
     // Running
     mpi::Topology topology(topologySize, loopType, size);
+
+    if (!topology.isValidOnThisRank())
+    {
+        EXPECT_TRUE(true);
+        return;
+    }
+
+    int rank;
+    MPI_Comm_rank(topology.getTopologyCommunicator(), &rank);
 
     std::unique_ptr<GridType> grid;
     grid.reset(new GridType(gridSize, minCoords, gridStep, gridSize));
@@ -179,9 +184,9 @@ void testExchange(
 
     mpi::FieldExchanger exchanger(grid->numCells, numExternalCells);
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(topology.getTopologyCommunicator());
+    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, topology.getTopologyCommunicator());
+    MPI_Barrier(topology.getTopologyCommunicator());
 
     // Check
     for (int r = 0; r < real_size; r++)
@@ -201,17 +206,17 @@ void testExchange(
             MPI_Request request;
             MPI_Status status;
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(topology.getTopologyCommunicator());
             if (neighbor != mpi::MPI_INVALID_RANK)
-                MPI_Isend(grid->Ex.getData(), grid->Ex.toVector().size(), MPI_DOUBLE, neighbor, 0, MPI_COMM_WORLD, &request);
+                MPI_Isend(grid->Ex.getData(), grid->Ex.toVector().size(), MPI_DOUBLE, neighbor, 0, topology.getTopologyCommunicator(), &request);
 
             if (inverse_neighbor != mpi::MPI_INVALID_RANK)
-                MPI_Recv(neighbor_grid->Ex.getData(), neighbor_grid->Ex.toVector().size(), MPI_DOUBLE, inverse_neighbor, 0, MPI_COMM_WORLD, &status);
+                MPI_Recv(neighbor_grid->Ex.getData(), neighbor_grid->Ex.toVector().size(), MPI_DOUBLE, inverse_neighbor, 0, topology.getTopologyCommunicator(), &status);
 
             if (neighbor != mpi::MPI_INVALID_RANK)
                 MPI_Wait(&request, &status);
 
-            MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(topology.getTopologyCommunicator());
 
             if (inverse_neighbor != mpi::MPI_INVALID_RANK)
             {
@@ -232,7 +237,7 @@ void testExchange(
         }
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(topology.getTopologyCommunicator());
 }
 
 

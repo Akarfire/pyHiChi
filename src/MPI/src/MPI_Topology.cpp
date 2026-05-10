@@ -15,6 +15,9 @@ Topology::Topology(const pfc::Int3& sections, LoopType loop_type, int node_count
     loop[0] = doesLoopOverX(loop_type);
     loop[1] = doesLoopOverY(loop_type);
     loop[2] = doesLoopOverZ(loop_type);
+
+
+    initCommunicator();
 }
 Topology::Topology(const pfc::Int3& sections, bool loop_mask[3], int node_count) : sections_(sections)
 {
@@ -26,6 +29,33 @@ Topology::Topology(const pfc::Int3& sections, bool loop_mask[3], int node_count)
 
     for (int i = 0; i < 3; i++)
         loop[i] = loop_mask[i];
+
+    initCommunicator();
+}
+
+// Frees mpi communicator
+Topology::~Topology()
+{
+    if (communicator != MPI_COMM_NULL)
+        MPI_Comm_free(&communicator);
+}
+
+
+// Separates a topology communicator from MPI_COMM_WORLD
+void Topology::initCommunicator()
+{
+    int mpi;
+    MPI_Initialized(&mpi);
+    if (!mpi) return;
+
+    int mpi_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+    // Whether this rank belongs to the topology
+    int color = (mpi_rank < sections_.x * sections_.y * sections_.z) ? 1 : MPI_UNDEFINED;
+    int key = mpi_rank;
+
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &communicator);
 }
 
 // Converts a 3D index into a 1D index

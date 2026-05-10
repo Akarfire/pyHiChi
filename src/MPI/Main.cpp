@@ -174,19 +174,19 @@ int main(int argc, char** argv)
             std::cout << "RANK " << rank << std::endl;
             debugPrintGrid_xyplane(grid, 0);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(topology.getTopologyCommunicator());
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(topology.getTopologyCommunicator());
 
     // Exchange logic
-    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.performExchangeSequence(grid->Ey.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.performExchangeSequence(grid->Ez.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, topology.getTopologyCommunicator());
+    exchanger.performExchangeSequence(grid->Ey.getData(), topology, rank, topology.getTopologyCommunicator());
+    exchanger.performExchangeSequence(grid->Ez.getData(), topology, rank, topology.getTopologyCommunicator());
 
-    exchanger.performExchangeSequence(grid->Bx.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.performExchangeSequence(grid->By.getData(), topology, rank, MPI_COMM_WORLD);
-    exchanger.performExchangeSequence(grid->Bz.getData(), topology, rank, MPI_COMM_WORLD);
+    exchanger.performExchangeSequence(grid->Bx.getData(), topology, rank, topology.getTopologyCommunicator());
+    exchanger.performExchangeSequence(grid->By.getData(), topology, rank, topology.getTopologyCommunicator());
+    exchanger.performExchangeSequence(grid->Bz.getData(), topology, rank, topology.getTopologyCommunicator());
 
     if (rank == 0)
         std::cout << "------------------------------------------------------------------------" << std::endl << std::endl << std::endl;
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
             std::cout << "RANK " << rank << std::endl;
             debugPrintGrid_xyplane(grid, 0);
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(topology.getTopologyCommunicator());
     }
 
     MPI_Finalize();

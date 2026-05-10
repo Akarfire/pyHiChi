@@ -14,6 +14,12 @@ namespace pfc
         std::shared_ptr<mpi::Topology> topology;
         int rank;
 
+    void checkCommunicator()
+    {
+        if (!topology->isValidOnThisRank())
+            throw std::runtime_error("Attempted to create MPI_FieldBoundaryCondition on rank, that does not participate in topology!");
+    }
+
     public:
 
         MPI_FieldBoundaryCondition(GridType* grid,
@@ -23,7 +29,9 @@ namespace pfc
 
             FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis), 
             exchanger(fieldExchanger), topology(topology), rank(mpi_rank)
-        {}
+        { 
+            checkCommunicator(); 
+        }
 
         // constructor for loading
         explicit MPI_FieldBoundaryCondition(GridType* grid,
@@ -33,7 +41,9 @@ namespace pfc
 
             FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex), 
             exchanger(fieldExchanger), topology(topology), rank(mpi_rank)
-        {}
+        {
+            checkCommunicator();
+        }
 
         void generateB(FP time) override;
         void generateE(FP time) override;
@@ -47,16 +57,16 @@ namespace pfc
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::generateE(FP time)
     {
-        exchanger->performExchangeOverAxis(grid->Ex.getData(), axis, *topology, rank, MPI_COMM_WORLD);
-        exchanger->performExchangeOverAxis(grid->Ey.getData(), axis, *topology, rank, MPI_COMM_WORLD);
-        exchanger->performExchangeOverAxis(grid->Ez.getData(), axis, *topology, rank, MPI_COMM_WORLD);
+        exchanger->performExchangeOverAxis(grid->Ex.getData(), axis, *topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeOverAxis(grid->Ey.getData(), axis, *topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeOverAxis(grid->Ez.getData(), axis, *topology, rank, topology->getTopologyCommunicator());
     }
 
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::generateB(FP time)
     {
-        exchanger->performExchangeOverAxis(grid->Bx.getData(), axis, *topology, rank, MPI_COMM_WORLD);
-        exchanger->performExchangeOverAxis(grid->By.getData(), axis, *topology, rank, MPI_COMM_WORLD);
-        exchanger->performExchangeOverAxis(grid->Bz.getData(), axis, *topology, rank, MPI_COMM_WORLD);
+        exchanger->performExchangeOverAxis(grid->Bx.getData(), axis, *topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeOverAxis(grid->By.getData(), axis, *topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeOverAxis(grid->Bz.getData(), axis, *topology, rank, topology->getTopologyCommunicator());
     }
 }
