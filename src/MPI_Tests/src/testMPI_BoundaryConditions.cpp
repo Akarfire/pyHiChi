@@ -51,7 +51,10 @@ public:
         if (topologySize > mpi_size)
             return;
 
-        topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::LoopXYZ, mpi_size);
+        bool loopMask[3] = {true, true, true};
+        loopMask[static_cast<int>(axis)] = false;
+
+        topology = std::make_shared<mpi::Topology>(sections, loopMask, mpi_size);
 
         if (!topology->isValidOnThisRank())
             return;
