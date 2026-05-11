@@ -69,6 +69,8 @@ public:
             // Other boundary condition
             else
             {
+                pfc::SideEnum direction = (first) ? pfc::SideEnum::RIGHT : pfc::SideEnum::LEFT;
+
                 switch (global_bounaries[dir])
                 {
                 case BoundaryType::Periodic:
@@ -77,7 +79,7 @@ public:
                 case BoundaryType::Reflect:
                     if constexpr (!std::is_same_v<MonoDirectionReflectBoundaryConditionType, void>) // For spectral solvers that do not have reflective boundary conditions
                         boundary_ptr.reset(new MonoDirectionReflectBoundaryConditionType(fieldSolver->grid, fieldSolver->domainIndexBegin, 
-                                                                fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), first /* <- bool positiveDirection */));
+                                                                fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), direction));
                 default: break;
                 }
             }

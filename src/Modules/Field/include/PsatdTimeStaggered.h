@@ -359,6 +359,14 @@ namespace pfc {
             if (this->boundaryConditions[d].first)
                 this->boundaryConditions[d].first->save(ostr);
         }
+
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = dynamic_cast<PeriodicalBoundaryConditionType*>(this->boundaryConditions[d].second.get()) ? 1 : 0;
+            ostr.write((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (this->boundaryConditions[d].second)
+                this->boundaryConditions[d].second->save(ostr);
+        }
     }
 
     template <bool ifPoisson>
@@ -372,6 +380,17 @@ namespace pfc {
                 this->boundaryConditions[d].first.reset(new PeriodicalBoundaryConditionType(
                     this->grid, this->domainIndexBegin, this->domainIndexEnd));
                 this->boundaryConditions[d].first->load(istr);
+            }
+        }
+
+        for (int d = 0; d < 3; d++) {
+            int isPeriodicalBC = 0;
+            istr.read((char*)&isPeriodicalBC, sizeof(isPeriodicalBC));
+
+            if (isPeriodicalBC) {
+                this->boundaryConditions[d].second.reset(new PeriodicalBoundaryConditionType(
+                    this->grid, this->domainIndexBegin, this->domainIndexEnd));
+                this->boundaryConditions[d].second->load(istr);
             }
         }
     }

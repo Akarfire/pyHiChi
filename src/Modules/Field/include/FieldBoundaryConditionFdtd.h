@@ -123,15 +123,13 @@ namespace pfc
     class ReflectBoundaryConditionMonoDirectionFdtd : public FieldBoundaryCondition<YeeGrid>
     {
     protected:
-        // If true: applied to +axis
-        // If false: applied to -axis
-        bool pDir;
+        SideEnum direction_;
 
     public:
 
         ReflectBoundaryConditionMonoDirectionFdtd(YeeGrid* grid,
-            Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis, bool positiveDirection) :
-            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis), pDir(positiveDirection)
+            Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis, SideEnum direction) :
+            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis), direction_(direction)
         {}
 
         // constructor for loading
@@ -145,7 +143,7 @@ namespace pfc
 
         FieldBoundaryCondition<YeeGrid>* createInstance(
             YeeGrid* grid, Int3 leftBorderIndex, Int3 rightBorderIndex, CoordinateEnum axis) override {
-            return new ReflectBoundaryConditionMonoDirectionFdtd(grid, leftBorderIndex, rightBorderIndex, axis, pDir);
+            return new ReflectBoundaryConditionMonoDirectionFdtd(grid, leftBorderIndex, rightBorderIndex, axis, direction_);
         }
     };
 
@@ -167,7 +165,7 @@ namespace pfc
                 index[dim1] = j;
                 index[dim2] = k;
 
-                index[dim0] = (pDir) ? (this->rightBorderIndex[dim0] - 1) : (this->leftBorderIndex[dim0] - 1);
+                index[dim0] = (direction_ == SideEnum::RIGHT) ? (this->rightBorderIndex[dim0] - 1) : (this->leftBorderIndex[dim0] - 1);
 
                 this->grid->Ex(index) = (FP)0.0;
                 this->grid->Ey(index) = (FP)0.0;
