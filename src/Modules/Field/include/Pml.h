@@ -19,7 +19,7 @@ namespace pfc {
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
         Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
-            Int3 sizePML, FP nPmlParam, FP r0PmlParam, bool directionalConfiguration[6]);
+            Int3 sizePML, bool directionalConfiguration[6], FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
         explicit Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
@@ -88,7 +88,7 @@ namespace pfc {
     template<class TGrid>
     inline Pml<TGrid>::Pml(TGrid* grid, FP dt,
         Int3 domainIndexBegin, Int3 domainIndexEnd,
-        Int3 sizePML, FP nPmlParam, FP r0PmlParam, bool directionalConfiguration[6]) :
+        Int3 sizePML, bool directionalConfiguration[6], FP nPmlParam, FP r0PmlParam) :
         grid(grid), dt(dt), sizePML(sizePML),
         domainIndexBegin(domainIndexBegin), domainIndexEnd(domainIndexEnd)
     {
@@ -197,7 +197,7 @@ namespace pfc {
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
         PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
-            Int3 sizePML, FP nPmlParam, FP r0PmlParam, bool directionalConfiguration[6]);
+            Int3 sizePML, bool directionalConfiguration[6], FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
         explicit PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
@@ -213,9 +213,9 @@ namespace pfc {
 
     template<class TGrid>
     inline PmlReal<TGrid>::PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
-        Int3 sizePML, FP nPmlParam, FP r0PmlParam, bool directionalConfiguration[6]) :
+        Int3 sizePML, bool directionalConfiguration[6], FP nPmlParam, FP r0PmlParam) :
         Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
-            sizePML, nPmlParam, r0PmlParam, directionalConfiguration)
+            sizePML, directionalConfiguration, nPmlParam, r0PmlParam)
     {}
 
     template<class TGrid>
@@ -237,7 +237,7 @@ namespace pfc {
         PmlSpectral(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
             Int3 domainIndexBegin, Int3 domainIndexEnd,
             Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
-            Int3 sizePML, FP nPmlParam, FP r0PmlParam, bool directionalConfiguration[6]);
+            Int3 sizePML, bool directionalConfiguration[6], FP nPmlParam, FP r0PmlParam);
 
         // constructor for loading
         explicit PmlSpectral(TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
@@ -295,9 +295,9 @@ namespace pfc {
         TGrid* grid, SpectralGrid<FP, complexFP>* complexGrid, FP dt,
         Int3 domainIndexBegin, Int3 domainIndexEnd,
         Int3 complexDomainIndexBegin, Int3 complexDomainIndexEnd,
-        Int3 sizePML, FP nPmlParam, FP r0PmlParam, bool directionalConfiguration[6]) :
+        Int3 sizePML, bool directionalConfiguration[6], FP nPmlParam, FP r0PmlParam) :
         Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
-            sizePML, nPmlParam, r0PmlParam, directionalConfiguration),
+            sizePML, directionalConfiguration, nPmlParam, r0PmlParam),
         complexGrid(complexGrid),
         complexDomainIndexBegin(complexDomainIndexBegin),
         complexDomainIndexEnd(complexDomainIndexEnd)
