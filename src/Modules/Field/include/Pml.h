@@ -10,6 +10,9 @@ namespace pfc {
     template<class TGrid>
     class Pml
     {
+
+    bool directionalConfiguration_[6] = {true, true, true, true, true, true};
+
     public:
 
         Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
@@ -41,6 +44,10 @@ namespace pfc {
         Int3 leftPmlBorder, rightPmlBorder;
         FP3 leftPmlBorderCoord, rightPmlBorderCoord;
         FP3 leftGlobalBorderCoord, rightGlobalBorderCoord;
+
+        // For resseting purposes
+        // Modifying these values affects nothing
+        bool* getDirectionalConfiguration() { return directionalConfiguration_; }
 
     protected:
 
@@ -98,6 +105,9 @@ namespace pfc {
         this->splitGrid.reset(new PmlSplitGrid(this->leftPmlBorder, this->rightPmlBorder,
             this->domainIndexBegin, this->domainIndexEnd, directionalConfiguration));
         initializePmlParams(nPmlParam, r0PmlParam, this->grid->steps);
+
+        for (int i = 0; i < 6; i++)
+            directionalConfiguration_[i] = directionalConfiguration[i];
     }
 
     template<class TGrid>
@@ -150,6 +160,9 @@ namespace pfc {
         ostr.write((char*)&leftGlobalBorderCoord, sizeof(leftGlobalBorderCoord));
         ostr.write((char*)&rightGlobalBorderCoord, sizeof(rightGlobalBorderCoord));
 
+        for (int i = 0; i < 6; i++)
+            ostr.write((char*)&(directionalConfiguration_[i]), sizeof(directionalConfiguration_[i]));
+
         splitGrid->save(ostr);
     }
 
@@ -165,6 +178,9 @@ namespace pfc {
         istr.read((char*)&rightPmlBorderCoord, sizeof(rightPmlBorderCoord));
         istr.read((char*)&leftGlobalBorderCoord, sizeof(leftGlobalBorderCoord));
         istr.read((char*)&rightGlobalBorderCoord, sizeof(rightGlobalBorderCoord));
+
+        for (int i = 0; i < 6; i++)
+            istr.read((char*)&(directionalConfiguration_[i]), sizeof(directionalConfiguration_[i]));
 
         this->splitGrid.reset(new PmlSplitGrid(this->leftPmlBorder, this->rightPmlBorder,
             this->domainIndexBegin, this->domainIndexEnd));
