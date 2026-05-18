@@ -5,13 +5,15 @@
 #include <vector>
 
 namespace pfc {
-
     class PmlSplitGrid
     {
     public:
 
         PmlSplitGrid(Int3 leftInnerCornerIndex, Int3 rightInnerCornerIndex,
             Int3 leftOuterCornerIndex, Int3 rightOuterCornerIndex);
+
+        PmlSplitGrid(Int3 leftInnerCornerIndex, Int3 rightInnerCornerIndex,
+            Int3 leftOuterCornerIndex, Int3 rightOuterCornerIndex, bool directionalConfiguration[6]);
 
         forceinline int getNumPmlNodes() const { return index.size(); }
         forceinline Int3 getIndex3d(int idx) { return index[idx]; }
@@ -44,6 +46,30 @@ namespace pfc {
                     bool xBoundaryPml = (i < leftInnerCornerIndex.x) || (i >= rightInnerCornerIndex.x);
                     bool yBoundaryPml = (j < leftInnerCornerIndex.y) || (j >= rightInnerCornerIndex.y);
                     bool zBoundaryPml = (k < leftInnerCornerIndex.z) || (k >= rightInnerCornerIndex.z);
+                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
+                    {
+                        index.push_back(Int3(i, j, k));
+                    }
+                }
+
+        const int indexSize = index.size();
+        resizeFields(indexSize);
+    }
+
+    inline PmlSplitGrid::PmlSplitGrid(
+        Int3 leftInnerCornerIndex, Int3 rightInnerCornerIndex,
+        Int3 leftOuterCornerIndex, Int3 rightOuterCornerIndex, bool directionalConfiguration[6])
+    {
+        const Int3 begin = leftOuterCornerIndex;
+        const Int3 end = rightOuterCornerIndex;
+
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    bool xBoundaryPml = (directionalConfiguration[1] && i < leftInnerCornerIndex.x) || (directionalConfiguration[0] && i >= rightInnerCornerIndex.x);
+                    bool yBoundaryPml = (directionalConfiguration[3] && j < leftInnerCornerIndex.y) || (directionalConfiguration[2] && j >= rightInnerCornerIndex.y);
+                    bool zBoundaryPml = (directionalConfiguration[5] && k < leftInnerCornerIndex.z) || (directionalConfiguration[4] && k >= rightInnerCornerIndex.z);
                     if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
                     {
                         index.push_back(Int3(i, j, k));
