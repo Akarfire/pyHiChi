@@ -266,7 +266,9 @@ namespace pfc {
         {}
 
         void setPML(Int3 sizePML);
+        void setPML(Int3 sizePML, bool directionalConfiguration[6]);
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setPML(int sizePMLx, int sizePMLy, int sizePMLz, bool directionalConfiguration[6]);
         void savePML(std::ostream& ostr);
         void loadPML(std::istream& istr);
         void resetPML();
@@ -286,9 +288,23 @@ namespace pfc {
     }
 
     template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::setPML(Int3 sizePML, bool directionalConfiguration[6])
+    {
+        this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->dt,
+            this->domainIndexBegin, this->domainIndexEnd, sizePML, directionalConfiguration));
+        this->updateDomainBorders();
+    }
+
+    template<class SchemeParams>
     inline void RealFieldSolver<SchemeParams>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
         this->setPML(Int3(sizePMLx, sizePMLy, sizePMLz));
+    }
+
+    template<class SchemeParams>
+    inline void RealFieldSolver<SchemeParams>::setPML(int sizePMLx, int sizePMLy, int sizePMLz, bool directionalConfiguration[6])
+    {
+        this->setPML(Int3(sizePMLx, sizePMLy, sizePMLz), directionalConfiguration);
     }
 
     template<class SchemeParams>
@@ -314,7 +330,7 @@ namespace pfc {
     template<class SchemeParams>
     inline void RealFieldSolver<SchemeParams>::resetPML()
     {
-        if (this->pml) this->setPML(this->pml->sizePML);
+        if (this->pml) this->setPML(this->pml->sizePML, this->pml->getDirectionalConfiguration());
     }
 
 
@@ -338,7 +354,9 @@ namespace pfc {
         void updateComplexDomainBorders();
 
         void setPML(Int3 sizePML);
+        void setPML(Int3 sizePML, bool directionalConfiguration[6]);
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
+        void setPML(int sizePMLx, int sizePMLy, int sizePMLz, bool directionalConfiguration[6]);
         void savePML(std::ostream& ostr);
         void loadPML(std::istream& istr);
         void resetPML();
@@ -440,9 +458,25 @@ namespace pfc {
     }
 
     template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::setPML(Int3 sizePML, bool directionalConfiguration[6])
+    {
+        this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->complexGrid.get(), this->dt,
+            this->domainIndexBegin, this->domainIndexEnd,
+            this->complexDomainIndexBegin, this->complexDomainIndexEnd, sizePML /*, directionalConfiguration*/));
+        this->updateDomainBorders();
+    }
+
+
+    template<class SchemeParams>
     inline void SpectralFieldSolver<SchemeParams>::setPML(int sizePMLx, int sizePMLy, int sizePMLz)
     {
         this->setPML(Int3(sizePMLx, sizePMLy, sizePMLz));
+    }
+
+    template<class SchemeParams>
+    inline void SpectralFieldSolver<SchemeParams>::setPML(int sizePMLx, int sizePMLy, int sizePMLz, bool directionalConfiguration[6])
+    {
+        this->setPML(Int3(sizePMLx, sizePMLy, sizePMLz) /*, directionalConfiguration*/);
     }
 
     template<class SchemeParams>
@@ -469,7 +503,7 @@ namespace pfc {
     template<class SchemeParams>
     inline void SpectralFieldSolver<SchemeParams>::resetPML()
     {
-        if (this->pml) this->setPML(this->pml->sizePML);
+        if (this->pml) this->setPML(this->pml->sizePML /*, this->pml->getDirectionalConfiguration()*/);
     }
 
 };
