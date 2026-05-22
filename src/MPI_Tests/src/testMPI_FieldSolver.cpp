@@ -81,7 +81,7 @@ public:
         mpi::GridSlicer::getSubGridParameters(  this->minCoords, this->gridSize, 
                                                 mainMinCoords, mainGridSize, 
                                                 this->gridStep, divisions, 
-                                                mpi_rank, *topology);
+                                                mpi_rank, topology);
 
         this->grid.reset(new GridType(this->gridSize, this->minCoords, this->gridStep, this->gridSize));
 

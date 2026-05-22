@@ -10,10 +10,13 @@
 #include "FieldBoundaryConditionFdtd.h"
 #include "FieldGeneratorFdtd.h"
 #include "Vectors.h"
+#include "Fdtd.h"
+#include "FieldBoundaryConditionFdtd.h"
 
 #include "HiChi_MPI.h"
 
 using GridType = pfc::YeeGrid;
+using FieldSolverType = pfc::FDTD;
 using FP = pfc::FP;
 using FP3 = pfc::FP3;
 using Int3 = pfc::Int3;
@@ -139,11 +142,13 @@ int main(int argc, char** argv)
     // MPI initialization
     MPI_Init(&argc, &argv);
 
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int size;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-    mpi::Topology topology(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::LoopX, size);
+    std::shared_ptr<mpi::Topology> topology = std::make_shared<mpi::Topology>(pfc::Int3(3, 2, 1), mpi::Topology::LoopType::LoopXYZ, size);
+
+    int rank;
+    MPI_Comm_rank(topology->getTopologyCommunicator(), &rank);
 
     std::vector<int> divisions[3] = {
         {2, 4},
@@ -161,46 +166,60 @@ int main(int argc, char** argv)
     std::unique_ptr<GridType> grid;
     grid.reset(new GridType(localGridSize, localMinCoords, gridStep, localGridSize));
 
+    std::shared_ptr<mpi::FieldExchanger> fieldExchanger = std::make_shared<mpi::FieldExchanger>(grid->numCells, grid->numExternalCells);
+
+    double timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(gridStep);
+    std::unique_ptr<FieldSolverType> fieldSolver;
+    fieldSolver.reset(new FieldSolverType(grid.get(), timeStep));
+
+    mpi::BoundaryType boundaries[6] = {
+        mpi::BoundaryType::Periodic,
+        mpi::BoundaryType::Periodic,
+        mpi::BoundaryType::Periodic,
+        mpi::BoundaryType::Periodic,
+        mpi::BoundaryType::Periodic,
+        mpi::BoundaryType::Periodic
+    };
+
+    using BoundaryManager = mpi::FieldBoundaryManager<FieldSolverType, GridType, pfc::ReflectBoundaryConditionMonoDirectionFdtd>;
+    BoundaryManager::setupBoundaryConditions(fieldSolver, boundaries, topology, fieldExchanger, rank);
+    
     initializeGrid(grid, rank);
 
-    std::cout << "RANK " << rank << " " << grid->numExternalCells << std::endl;
-    mpi::FieldExchanger exchanger(grid->numCells, grid->numExternalCells);
+    fieldSolver->setPML(pfc::Int3(1, 1, 1));
+    auto& pmlIndex = fieldSolver->pml->splitGrid->index;
 
-    // Debug print
-    for (int r = 0; r < size; r++)
-    {
-        if (rank == r)
-        {
-            std::cout << "RANK " << rank << std::endl;
-            debugPrintGrid_xyplane(grid, 0);
-        }
-        MPI_Barrier(topology.getTopologyCommunicator());
-    }
+    for (int i = 0; i < pmlIndex.size(); i++)
+        std::cout << pmlIndex[i] << std::endl;
 
-    MPI_Barrier(topology.getTopologyCommunicator());
+    // // Debug print
+    // for (int r = 0; r < size; r++)
+    // {
+    //     if (rank == r)
+    //     {
+    //         std::cout << "RANK " << rank << std::endl;
+    //         debugPrintGrid_xyplane(grid, 0);
+    //     }
+    //     MPI_Barrier(topology->getTopologyCommunicator());
+    // }
 
-    // Exchange logic
-    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, topology.getTopologyCommunicator());
-    exchanger.performExchangeSequence(grid->Ey.getData(), topology, rank, topology.getTopologyCommunicator());
-    exchanger.performExchangeSequence(grid->Ez.getData(), topology, rank, topology.getTopologyCommunicator());
+    // MPI_Barrier(topology->getTopologyCommunicator());
 
-    exchanger.performExchangeSequence(grid->Bx.getData(), topology, rank, topology.getTopologyCommunicator());
-    exchanger.performExchangeSequence(grid->By.getData(), topology, rank, topology.getTopologyCommunicator());
-    exchanger.performExchangeSequence(grid->Bz.getData(), topology, rank, topology.getTopologyCommunicator());
+    // //fieldSolver->updateFields();
 
-    if (rank == 0)
-        std::cout << "------------------------------------------------------------------------" << std::endl << std::endl << std::endl;
+    // if (rank == 0)
+    //     std::cout << "------------------------------------------------------------------------" << std::endl << std::endl << std::endl;
 
-    // Debug print
-    for (int r = 0; r < size; r++)
-    {
-        if (rank == r)
-        {
-            std::cout << "RANK " << rank << std::endl;
-            debugPrintGrid_xyplane(grid, 0);
-        }
-        MPI_Barrier(topology.getTopologyCommunicator());
-    }
+    // // Debug print
+    // for (int r = 0; r < size; r++)
+    // {
+    //     if (rank == r)
+    //     {
+    //         std::cout << "RANK " << rank << std::endl;
+    //         debugPrintGrid_xyplane(grid, 0);
+    //     }
+    //     MPI_Barrier(topology->getTopologyCommunicator());
+    // }
 
     MPI_Finalize();
     return 0;

@@ -9,10 +9,10 @@ namespace mpi
 void GridSlicer::getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size, 
                                       const pfc::FP3& main_origin, const pfc::Int3& main_size, const pfc::FP3& step,
                                       std::vector<int> divisions[3],
-                                      int rank, const Topology& topology)
+                                      int rank, std::shared_ptr<mpi::Topology> topology)
 {
-    pfc::Int3 node = topology.getNodeSection(rank);
-    const pfc::Int3& sections = topology.getSections();
+    pfc::Int3 node = topology->getNodeSection(rank);
+    const pfc::Int3& sections = topology->getSections();
 
     pfc::Int3 lb;
     pfc::Int3 rb;

@@ -23,7 +23,7 @@ public:
     static void getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size, 
                                      const pfc::FP3& main_origin, const pfc::Int3& main_size, const pfc::FP3& step,
                                      std::vector<int> divisions[3],
-                                     int rank, const class Topology& topology);
+                                     int rank, std::shared_ptr<class Topology> topology);
 };
 
 }

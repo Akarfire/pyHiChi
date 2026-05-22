@@ -20,7 +20,7 @@ FP testFunc(const FP3& coords)
 
 int getResponsibleSubGrid(  Int3& outIndexOrigin,
                             const Int3& index, const FP3& minCoords, const FP3& gridStep, 
-                            std::vector<int> divisions[3], const mpi::Topology& topology)
+                            std::vector<int> divisions[3], std::shared_ptr<mpi::Topology> topology)
 {
     Int3 section = Int3(0, 0, 0);
     for (int div_x = 0; div_x < divisions[0].size(); div_x++)
@@ -47,7 +47,7 @@ int getResponsibleSubGrid(  Int3& outIndexOrigin,
 
     //outIndexOrigin
 
-    return topology.getResponsibleNode(section);
+    return topology->getResponsibleNode(section);
 }
 
 
@@ -82,7 +82,7 @@ TEST(MPI_GridSlicer, GridSlicerIsValid_1)
         {5, 10}
     };
     int nodeCount = sections.x * sections.y * sections.z;
-    mpi::Topology topology(sections, mpi::Topology::LoopType::None, nodeCount);
+    std::shared_ptr<mpi::Topology> topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::None, nodeCount);
 
 
     // Initializing main grid
@@ -174,7 +174,7 @@ TEST(MPI_GridSlicer, GridSlicerIsValid_2)
         {}
     };
     int nodeCount = sections.x * sections.y * sections.z;
-    mpi::Topology topology(sections, mpi::Topology::LoopType::None, nodeCount);
+    std::shared_ptr<mpi::Topology> topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::None, nodeCount);
 
 
     // Initializing main grid
