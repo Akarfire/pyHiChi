@@ -36,8 +36,15 @@ Topology::Topology(const pfc::Int3& sections, bool loop_mask[3], int node_count)
 // Frees mpi communicator
 Topology::~Topology()
 {
-    if (communicator != MPI_COMM_NULL)
-        MPI_Comm_free(&communicator);
+    int mpiInit;
+    MPI_Initialized(&mpiInit);
+
+    int mpiFinalized;
+    MPI_Finalized(&mpiFinalized);
+
+    if (mpiInit && !mpiFinalized)
+        if (communicator != MPI_COMM_NULL)
+            MPI_Comm_free(&communicator);
 }
 
 
