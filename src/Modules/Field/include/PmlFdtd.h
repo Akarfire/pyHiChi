@@ -16,6 +16,13 @@ namespace pfc {
             this->computeCoeffs();
         }
 
+        PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
+            Int3 sizePML, Int3 localIndexOffset, FP nPmlParam = (FP)4.0, FP r0PmlParam = (FP)1e-8) :
+            PmlReal(grid, dt, domainIndexBegin, domainIndexEnd, sizePML, localIndexOffset, nPmlParam, r0PmlParam)
+        {
+            this->computeCoeffs();
+        }
+
         // constructor for loading
         explicit PmlFdtd(YeeGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd) :
             PmlReal(grid, dt, domainIndexBegin, domainIndexEnd)
