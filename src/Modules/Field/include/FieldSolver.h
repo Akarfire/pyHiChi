@@ -286,7 +286,8 @@ namespace pfc {
 
         void setPML(Int3 sizePML);
         void setPML(int sizePMLx, int sizePMLy, int sizePMLz);
-        void setPMLGlobal(Int3 sizePML, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd, Int3 localIndexOffset);
+        void setPMLGlobal(Int3 sizePML, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd, 
+            Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex);
 
         void savePML(std::ostream& ostr);
         void loadPML(std::istream& istr);
@@ -313,10 +314,12 @@ namespace pfc {
     }
 
     template<class SchemeParams>
-    void RealFieldSolver<SchemeParams>::setPMLGlobal(Int3 sizePML, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd, Int3 localIndexOffset)
+    void RealFieldSolver<SchemeParams>::setPMLGlobal(Int3 sizePML, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd, 
+        Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex)
     {
         this->pml.reset(new typename SchemeParams::PmlType(this->grid, this->dt,
-            globalDomainIndexBegin, globalDomainIndexEnd, sizePML, localIndexOffset));
+            globalDomainIndexBegin, globalDomainIndexEnd, sizePML, 
+            localIndexOffset, localMinIndex, localMaxIndex));
         this->updateDomainBorders();
     }
 

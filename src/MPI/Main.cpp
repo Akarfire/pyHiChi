@@ -134,7 +134,7 @@ void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
 
 int main(int argc, char** argv)
 {
-    Int3 gridSize = Int3(6, 6, 4);
+    Int3 gridSize = Int3(20, 10, 10);
     FP3 minCoords = FP3(0, 0, 0);
     FP3 maxCoords = FP3(1, 1, 1);
     FP3 gridStep = (maxCoords - minCoords) / (FP3)gridSize;
@@ -151,8 +151,8 @@ int main(int argc, char** argv)
     MPI_Comm_rank(topology->getTopologyCommunicator(), &rank);
 
     std::vector<int> divisions[3] = {
-        {2, 4},
-        {4},
+        {5, 10},
+        {5},
         {}
     };
 
@@ -189,15 +189,23 @@ int main(int argc, char** argv)
 
     fieldSolver->setPMLGlobal(pfc::Int3(1, 1, 1), 
         grid->getNumExternalLeftCells(), 
-        grid->getNumExternalLeftCells() + grid->numInternalCells,
-        localIndexOffset
+        gridSize + grid->getNumExternalRightCells(),
+        localIndexOffset, Int3(0, 0, 0), grid->numCells
     );
 
     auto& pmlIndex = fieldSolver->pml->splitGrid->index;
 
-    if (rank == 0)
+    if (rank == 5)
+    {
+        std::cout << "Grid Size: " << grid->numCells << std::endl;
+        std::cout << "Local Offset: " << localIndexOffset << std::endl;
         for (int i = 0; i < pmlIndex.size(); i++)
-            std::cout << pmlIndex[i] << std::endl;
+        {
+            std::cout << pmlIndex[i] << ", ";
+            if (i % 6 == 0)
+                std::cout << std::endl;
+        }
+    }
 
     // // Debug print
     // for (int r = 0; r < size; r++)
