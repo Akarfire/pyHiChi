@@ -6,7 +6,7 @@ namespace mpi
 
 // Slices a min gird into sections and outputs grid parameters to a sub-grid associated with the specified rank
 // Grid divisions are specified in an array of std::vectors, divisions[0] - divisions along the X axis, [1] - Y, [2] - Z
-void GridSlicer::getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size, 
+void GridSlicer::getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size, pfc::Int3& out_local_index_offset,
                                       const pfc::FP3& main_origin, const pfc::Int3& main_size, const pfc::FP3& step,
                                       std::vector<int> divisions[3],
                                       int rank, std::shared_ptr<mpi::Topology> topology)
@@ -27,6 +27,7 @@ void GridSlicer::getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size,
     rb.z = (node.z == sections.z - 1) ? main_size.z : (divisions[2][node.z]);
 
     // Outputs
+    out_local_index_offset = lb;
     out_origin = main_origin + step * lb;
     out_size = rb - lb;
 }

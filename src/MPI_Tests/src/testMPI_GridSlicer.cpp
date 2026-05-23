@@ -110,9 +110,10 @@ TEST(MPI_GridSlicer, GridSlicerIsValid_1)
     {
         FP3 localMinCoords;
         Int3 localGridSize;
+        Int3 localIndexOffset;
 
         // Slicing
-        mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, 
+        mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, localIndexOffset,
                                                 minCoords, gridSize, gridStep, 
                                                 divisions, r, topology);
 
@@ -201,9 +202,10 @@ TEST(MPI_GridSlicer, GridSlicerIsValid_2)
     {
         FP3 localMinCoords;
         Int3 localGridSize;
+        Int3 localIndexOffset;
 
         // Slicing
-        mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, 
+        mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, localIndexOffset,
                                                 minCoords, gridSize, gridStep, 
                                                 divisions, r, topology);
 

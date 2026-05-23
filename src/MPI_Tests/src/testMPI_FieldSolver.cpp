@@ -78,7 +78,8 @@ public:
             {}, 
             {}
         };
-        mpi::GridSlicer::getSubGridParameters(  this->minCoords, this->gridSize, 
+        Int3 localIndexOffset;
+        mpi::GridSlicer::getSubGridParameters(  this->minCoords, this->gridSize, localIndexOffset,
                                                 mainMinCoords, mainGridSize, 
                                                 this->gridStep, divisions, 
                                                 mpi_rank, topology);

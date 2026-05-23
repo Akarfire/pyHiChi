@@ -159,7 +159,8 @@ int main(int argc, char** argv)
     // Splitting main grid
     Int3 localGridSize;
     FP3 localMinCoords;
-    mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, 
+    Int3 localIndexOffset;
+    mpi::GridSlicer::getSubGridParameters(  localMinCoords, localGridSize, localIndexOffset,
                                             minCoords, gridSize, gridStep, 
                                             divisions, rank, topology);
 
@@ -186,11 +187,17 @@ int main(int argc, char** argv)
     
     initializeGrid(grid, rank);
 
-    fieldSolver->setPML(pfc::Int3(1, 1, 1));
+    fieldSolver->setPMLGlobal(pfc::Int3(1, 1, 1), 
+        grid->getNumExternalLeftCells(), 
+        grid->getNumExternalLeftCells() + grid->numInternalCells,
+        localIndexOffset
+    );
+
     auto& pmlIndex = fieldSolver->pml->splitGrid->index;
 
-    for (int i = 0; i < pmlIndex.size(); i++)
-        std::cout << pmlIndex[i] << std::endl;
+    if (rank == 0)
+        for (int i = 0; i < pmlIndex.size(); i++)
+            std::cout << pmlIndex[i] << std::endl;
 
     // // Debug print
     // for (int r = 0; r < size; r++)

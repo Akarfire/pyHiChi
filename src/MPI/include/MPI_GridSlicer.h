@@ -20,7 +20,7 @@ public:
 
     // Slices a min gird into sections and outputs grid parameters to a sub-grid associated with the specified rank
     // Grid divisions are specified in an array of std::vectors, divisions[0] - divisions along the X axis, [1] - Y, [2] - Z
-    static void getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size, 
+    static void getSubGridParameters(pfc::FP3& out_origin, pfc::Int3& out_size, pfc::Int3& out_local_index_offset,
                                      const pfc::FP3& main_origin, const pfc::Int3& main_size, const pfc::FP3& step,
                                      std::vector<int> divisions[3],
                                      int rank, std::shared_ptr<class Topology> topology);
