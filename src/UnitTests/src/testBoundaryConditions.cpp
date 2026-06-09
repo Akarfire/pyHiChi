@@ -213,7 +213,7 @@ public:
     ReflectBoundaryConditionTest() {
         this->fieldSolver->setReflectBoundaryConditions(this->axis);
 
-        for (int d = 0; d < 3; d++) {
+        for (int d = 1; d < 3; d++) {
             int dim = ((int)this->axis + d) % 3;
             if (dim < this->grid->dimensionality)
                 this->fieldSolver->setPeriodicalBoundaryConditions((CoordinateEnum)dim);
