@@ -32,8 +32,8 @@ private:
 public:
 
     // Setup field boundary conditions for subgrids, based on global grid boundary requirements
-    // global_bounaries are specified in the following order: +X, -X, +Y, -Y, +Z, -Z
-    static void setupBoundaryConditions(std::unique_ptr<FieldSolverType>& fieldSolver, BoundaryType global_bounaries[6], 
+    // global_boundaries are specified in the following order: +X, -X, +Y, -Y, +Z, -Z
+    static void setupBoundaryConditions(std::unique_ptr<FieldSolverType>& fieldSolver, BoundaryType global_boundaries[6], 
                                         std::shared_ptr<mpi::Topology> topology, std::shared_ptr<mpi::FieldExchanger> fieldExchanger, int rank)
     {
         for (int dir = 0; dir < 6; dir++)
@@ -56,14 +56,11 @@ public:
                 std::unique_ptr<pfc::FieldBoundaryCondition<GridType>>& inverted_boundary_ptr = 
                     (!first) ? (fieldSolver->boundaryConditions[axis].first) : (fieldSolver->boundaryConditions[axis].second);
 
-                // Only create a new one when the opposite direction does not have one
-                // or in cases when the opposite direction has a diferent boundary condition
-                if (inverted_boundary_ptr.get() == nullptr || inverted_neighbor == MPI_INVALID_RANK)
-                {    
-                    boundary_ptr.reset(new pfc::MPI_FieldBoundaryCondition<GridType>(fieldSolver->grid, fieldSolver->domainIndexBegin, 
-                                                                                     fieldSolver->domainIndexEnd, static_cast<pfc::CoordinateEnum>(axis), 
-                                                                                     fieldExchanger, topology, rank));
-                }
+                boundary_ptr.reset(new pfc::MPI_FieldBoundaryCondition<GridType>(   fieldSolver->grid, fieldSolver->domainIndexBegin, 
+                                                                                    fieldSolver->domainIndexEnd, 
+                                                                                    static_cast<pfc::CoordinateEnum>(axis), 
+                                                                                    (first) ? (pfc::SideEnum::RIGHT) : (pfc::SideEnum::LEFT),
+                                                                                    fieldExchanger, topology, rank));
             }
 
             // Other boundary condition
@@ -71,10 +68,10 @@ public:
             {
                 pfc::SideEnum direction = (first) ? pfc::SideEnum::RIGHT : pfc::SideEnum::LEFT;
 
-                switch (global_bounaries[dir])
+                switch (global_boundaries[dir])
                 {
                 case BoundaryType::Periodic:
-                    throw(std::runtime_error("MPI boundary condition does not match topoplogy looping configuration!"));
+                    throw(std::runtime_error("MPI boundary condition does not match topology looping configuration!"));
                     break;
                 case BoundaryType::Reflect:
                     if constexpr (!std::is_same_v<MonoDirectionReflectBoundaryConditionType, void>) // For spectral solvers that do not have reflective boundary conditions

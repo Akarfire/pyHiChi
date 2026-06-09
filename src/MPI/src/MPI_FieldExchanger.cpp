@@ -51,36 +51,29 @@ FieldExchanger::~FieldExchanger()
 // Performs echange sequence iteration for node "rank" in the specified topology
 // BLOCKING
 // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-void FieldExchanger::performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator)
+void FieldExchanger::performExchangeInDirection(pfc::FP* data, Direction direction, std::shared_ptr<Topology> topology, int rank, MPI_Comm communicator)
 {
-    int posDirection = static_cast<int>(axis) * 2;
-    int negDirection = posDirection + 1;
-    for (int dir = posDirection; dir <= negDirection; dir++)
-    {
-        Direction direction = static_cast<Direction>(dir);
+    // Neighbors
+    int send_neighbor = topology->getNeighbor(rank, direction);
+    int recv_neighbor = topology->getNeighbor(rank, invertDirection(direction));
 
-        // Neighbors
-        int send_neighbor = topology.getNeighbor(rank, direction);
-        int recv_neighbor = topology.getNeighbor(rank, invertDirection(direction));
+    // Sync nodes
+    MPI_Barrier(communicator);
 
-        // Sync nodes
-        MPI_Barrier(communicator);
+    MPI_Request request;
+    MPI_Status status;
 
-        MPI_Request request;
-        MPI_Status status;
+    // Sending
+    if (send_neighbor != MPI_INVALID_RANK)
+        MPI_Isend(data, 1, sendTypes[static_cast<int>(direction)], send_neighbor, 0, communicator, &request);
+    
+    // Receiving
+    if (recv_neighbor != MPI_INVALID_RANK)
+        MPI_Recv(data, 1, recvTypes[static_cast<int>(direction)], recv_neighbor, 0, communicator, &status);
 
-        // Sending
-        if (send_neighbor != MPI_INVALID_RANK)
-            MPI_Isend(data, 1, sendTypes[dir], send_neighbor, 0, communicator, &request);
-        
-        // Receiving
-        if (recv_neighbor != MPI_INVALID_RANK)
-            MPI_Recv(data, 1, recvTypes[dir], recv_neighbor, 0, communicator, &status);
-
-        // Waiting for send operation to complete
-        if (send_neighbor != MPI_INVALID_RANK)
-            MPI_Wait(&request, &status);
-    }
+    // Waiting for send operation to complete
+    if (send_neighbor != MPI_INVALID_RANK)
+        MPI_Wait(&request, &status);
 
     // Sync nodes
     MPI_Barrier(communicator);
@@ -88,11 +81,14 @@ void FieldExchanger::performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum 
 
 // Performs echange sequence iteration for node "rank" in the specified topology
 // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY AT THE SAME TIME!
-void FieldExchanger::performExchangeSequence(pfc::FP* data, const Topology& topology, int rank, MPI_Comm communicator)
+void FieldExchanger::performExchangeSequence(pfc::FP* data, std::shared_ptr<Topology> topology, int rank, MPI_Comm communicator)
 {
-    performExchangeOverAxis(data, pfc::CoordinateEnum::x, topology, rank, communicator);
-    performExchangeOverAxis(data, pfc::CoordinateEnum::y, topology, rank, communicator);
-    performExchangeOverAxis(data, pfc::CoordinateEnum::z, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::pX, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::nX, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::pY, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::nY, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::pZ, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::nZ, topology, rank, communicator);
 }
 
 }

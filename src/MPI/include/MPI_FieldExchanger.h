@@ -7,6 +7,7 @@
 #include "Vectors.h"
 #include "Enums.h"
 
+#include "MPI_Utilities.h"
 
 namespace mpi
 {
@@ -33,12 +34,12 @@ public:
     // Performs echange sequence iteration for node "rank" in the specified topology
     // BLOCKING
     // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-    void performExchangeOverAxis(pfc::FP* data, pfc::CoordinateEnum axis, const class Topology& topology, int rank, MPI_Comm communicator);
+    void performExchangeInDirection(pfc::FP* data, Direction direction, std::shared_ptr<class Topology> topology, int rank, MPI_Comm communicator);
 
 
     // Performs echange sequence iteration over every axis for node "rank" in the specified topology
     // BLOCKING
     // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-    void performExchangeSequence(pfc::FP* data, const class Topology& topology, int rank, MPI_Comm communicator);
+    void performExchangeSequence(pfc::FP* data, std::shared_ptr<class Topology> topology, int rank, MPI_Comm communicator);
 };
 }
