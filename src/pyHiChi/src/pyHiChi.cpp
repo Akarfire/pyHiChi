@@ -31,6 +31,10 @@
 #include "Mapping.h"
 #include "FieldConfiguration.h"
 
+// MPI integration
+#ifdef PYHICHI_WITH_MPI
+#   include "pyMPI.h"
+#endif
 
 namespace py = pybind11;
 using namespace pfc;
@@ -716,4 +720,7 @@ PYBIND11_MODULE(pyHiChi, object) {
         .def("get_B", &TightFocusingField::getB)
         ;
 
+    #ifdef PYHICHI_WITH_MPI
+        initMpiBinding(object);
+    #endif
 }

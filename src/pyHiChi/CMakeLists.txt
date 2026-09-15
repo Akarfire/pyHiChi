@@ -35,3 +35,7 @@ else()
     target_link_libraries(pyHiChi PUBLIC ${FFT_LIBS})
 endif()
 
+# MPI integration
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../pyMPI
+                 ${CMAKE_CURRENT_BINARY_DIR}/pyMPI)
+
