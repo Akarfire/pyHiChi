@@ -153,5 +153,11 @@ void initMpiBinding(py::module& module)
             {
                 return pythonizeRank(topology.getNeighbor(rank, offset));
             },
-            py::arg("node_rank"), py::arg("offset"));
+            py::arg("node_rank"), py::arg("offset"))
+
+        .def("is_valid_on_this_rank",
+            [](const mpi::Topology& topology) 
+            {
+                return topology.isValidOnThisRank();
+            });
 }
