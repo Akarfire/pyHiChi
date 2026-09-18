@@ -13,6 +13,10 @@ namespace pfc {
         PmlSplitGrid(Int3 leftInnerCornerIndex, Int3 rightInnerCornerIndex,
             Int3 leftOuterCornerIndex, Int3 rightOuterCornerIndex);
 
+        PmlSplitGrid(Int3 globalLeftInnerCornerIndex, Int3 globalRightInnerCornerIndex,
+            Int3 globalLeftOuterCornerIndex, Int3 globalRightOuterCornerIndex,
+            Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex);
+
         forceinline int getNumPmlNodes() const { return index.size(); }
         forceinline Int3 getIndex3d(int idx) { return index[idx]; }
         forceinline std::vector<Int3>& getIndices() { return index; }
@@ -44,6 +48,39 @@ namespace pfc {
                     bool xBoundaryPml = (i < leftInnerCornerIndex.x) || (i >= rightInnerCornerIndex.x);
                     bool yBoundaryPml = (j < leftInnerCornerIndex.y) || (j >= rightInnerCornerIndex.y);
                     bool zBoundaryPml = (k < leftInnerCornerIndex.z) || (k >= rightInnerCornerIndex.z);
+                    if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
+                    {
+                        index.push_back(Int3(i, j, k));
+                    }
+                }
+
+        const int indexSize = index.size();
+        resizeFields(indexSize);
+    }
+
+    inline PmlSplitGrid::PmlSplitGrid(
+        Int3 globalLeftInnerCornerIndex, Int3 globalRightInnerCornerIndex,
+        Int3 globalLeftOuterCornerIndex, Int3 globalRightOuterCornerIndex,
+        Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex)
+    {
+        const Int3 begin = localMinIndex ;
+        const Int3 end = localMaxIndex;
+
+        for (int i = begin.x; i < end.x; i++)
+            for (int j = begin.y; j < end.y; j++)
+                for (int k = begin.z; k < end.z; k++)
+                {
+                    Int3 ijk = Int3(i, j, k) + localIndexOffset;
+
+                    if (! (ijk.x >= globalLeftOuterCornerIndex.x && ijk.x < globalRightOuterCornerIndex.x
+                        && ijk.y >= globalLeftOuterCornerIndex.y && ijk.y < globalRightOuterCornerIndex.y
+                        && ijk.z >= globalLeftOuterCornerIndex.z && ijk.z < globalRightOuterCornerIndex.z)
+                       )
+                        continue;
+
+                    bool xBoundaryPml = (ijk.x < globalLeftInnerCornerIndex.x) || (ijk.x >= globalRightInnerCornerIndex.x);
+                    bool yBoundaryPml = (ijk.y < globalLeftInnerCornerIndex.y) || (ijk.y >= globalRightInnerCornerIndex.y);
+                    bool zBoundaryPml = (ijk.z < globalLeftInnerCornerIndex.z) || (ijk.z >= globalRightInnerCornerIndex.z);
                     if (xBoundaryPml || yBoundaryPml || zBoundaryPml)
                     {
                         index.push_back(Int3(i, j, k));
