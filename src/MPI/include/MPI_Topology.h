@@ -91,11 +91,11 @@ public:
 
     // MPI Communicator for processes that participate in this topology
     // NOTE: Depends on the rank this method is executed at
-    MPI_Comm getTopologyCommunicator() { return communicator; }
+    MPI_Comm getTopologyCommunicator() const { return communicator; }
 
     // Whether this rank participates in topology or not
     // NOTE: Depends on the rank this method is executed at
-    bool isValidOnThisRank() { return communicator != MPI_COMM_NULL; }
+    bool isValidOnThisRank() const { return communicator != MPI_COMM_NULL; }
 };
 
 }
