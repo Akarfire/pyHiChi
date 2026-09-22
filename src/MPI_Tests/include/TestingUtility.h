@@ -327,11 +327,13 @@ struct TypeDefinitionsFieldTest
 
 // necessary to run test with different fields and dimensions (1d, 2d, 3d)
 // wave proparates along VAxis (x, y, z)
-template <class TFieldSolver, class TMonoDirectionReflectBoundaryConditionType, int VDimension, CoordinateEnum VAxis>
+template <class TFieldSolver, class TMonoDirectionReflectBoundaryConditionType, int VDimension, CoordinateEnum VAxis, int SectionsX, int SectionsY, int SectionsZ>
 struct MPI_TypeDefinitionsFieldTest
 {
     using FieldSolverType = TFieldSolver;
     using ReflectBoundaryConditionType = TMonoDirectionReflectBoundaryConditionType;
     static const int dimension = VDimension;
     static const CoordinateEnum axis = VAxis;
+    
+    static Int3 getSections() { return Int3(SectionsX, SectionsY, SectionsZ); }
 };

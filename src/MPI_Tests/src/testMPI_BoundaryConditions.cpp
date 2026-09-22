@@ -33,7 +33,7 @@ public:
     const FP maxError = 0.2;
 
     // MPI
-    Int3 sections;
+    const Int3 sections = TTypeDefinitionsFieldTest::getSections();
     std::shared_ptr<mpi::Topology> topology;
     std::shared_ptr<mpi::FieldExchanger> fieldExchanger;
 
@@ -43,8 +43,6 @@ public:
     {
         int mpi_size;
         MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
-        sections = Int3(2, 2, 1);
 
         int topologySize = sections.x * sections.y * sections.z;
 
@@ -204,9 +202,9 @@ public:
 };
 
 typedef ::testing::Types <
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x>,
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y>,
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z>
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 2, 2, 1>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 2, 2, 1>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 2, 2, 1>
 > typesReflect;
 
 TYPED_TEST_CASE(ReflectBoundaryConditionTest, typesReflect);

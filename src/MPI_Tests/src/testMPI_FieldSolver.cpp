@@ -17,6 +17,7 @@ public:
 
     const int dimension = TTypeDefinitionsFieldTest::dimension;
     const CoordinateEnum axis = TTypeDefinitionsFieldTest::axis;
+    const Int3 sections = TTypeDefinitionsFieldTest::getSections();
 
     const int gridSizeLongitudinal = 32;
     const int gridSizeTransverse = 8;
@@ -42,7 +43,6 @@ public:
         
         MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-        Int3 sections = Int3(4, 1, 1);
         int topologySize = sections.x * sections.y * sections.z;
 
         if (topologySize > mpi_size)
@@ -72,12 +72,20 @@ public:
         mainMaxCoords = constants::c * (FP3)mainGridSize;
         this->gridStep = (mainMaxCoords - mainMinCoords) / (FP3)mainGridSize;
 
-        int div = mainGridSize.x / 4;
         std::vector<int> divisions[3] = {
-            {div, 2 * div, 3 * div},
+            {},
             {}, 
             {}
         };
+        for (int i = 1; i < sections.x; i++)
+            divisions[0].push_back((mainGridSize.x / sections.x) * i);
+
+        for (int i = 1; i < sections.y; i++)
+            divisions[1].push_back((mainGridSize.y / sections.y) * i);
+
+        for (int i = 1; i < sections.z; i++)
+            divisions[2].push_back((mainGridSize.z / sections.z) * i);
+
         Int3 localIndexOffset;
         mpi::GridSlicer::getSubGridParameters(  this->minCoords, this->gridSize, localIndexOffset,
                                                 mainMinCoords, mainGridSize, 
@@ -155,17 +163,39 @@ public:
 #ifndef __USE_FFT__
 
 typedef ::testing::Types <
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x>,
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y>,
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z>
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 4, 1, 1>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 4, 2, 3>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 6, 2, 2>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 1, 3, 3>,
+
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 1, 4, 1>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 2, 4, 3>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 2, 6, 2>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 3, 1, 3>,
+
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 1, 1, 4>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 2, 3, 4>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 2, 2, 6>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 3, 3, 1>
 > types;
 
 #else
 
 typedef ::testing::Types <
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x>,
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y>,
-    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z>
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 4, 1, 1>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 4, 2, 3>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 6, 2, 2>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::x, 1, 3, 3>,
+
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 1, 4, 1>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 2, 4, 3>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 2, 6, 2>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::y, 3, 1, 3>,
+
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 1, 1, 4>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 2, 3, 4>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 2, 2, 6>,
+    MPI_TypeDefinitionsFieldTest<FDTD, ReflectBoundaryConditionMonoDirectionFdtd, 3, CoordinateEnum::z, 3, 3, 1>
 
     //MPI_TypeDefinitionsFieldTest<PSTD, void, 3, CoordinateEnum::x>
     // MPI_TypeDefinitionsFieldTest<PSTD, void, 3, CoordinateEnum::y>,
