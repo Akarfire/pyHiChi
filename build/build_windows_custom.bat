@@ -5,7 +5,7 @@ for %%x in (%*) do (
    set /A argCount+=1
 )
 
-set USE_OPENMP="OFF"
+set USE_OPENMP="ON"
 set GENERATOR="Visual Studio 17 2022"
 set TOOLSET=""
 set USE_FFTW="OFF"
