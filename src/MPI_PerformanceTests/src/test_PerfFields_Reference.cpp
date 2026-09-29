@@ -1,15 +1,13 @@
 #include <iostream>
 #include <chrono>
-#include "mpi.h"
 
 #include "Fdtd.h"
-#include "HiChi_MPI.h"
 
 #define VERIFY
 
 using namespace pfc;
 
-class PerfTest
+class ReferencePerfTest
 {
     // CONFIGURATION
 
@@ -33,9 +31,6 @@ class PerfTest
     int numSteps = 0;
 
     const FP maxError = 1e-2;
-
-    std::shared_ptr<mpi::Topology> topology;
-    std::shared_ptr<mpi::FieldExchanger> fieldExchanger;
 
     // HELPERS
 
@@ -84,31 +79,13 @@ class PerfTest
 
 public:
     // Constructor / Runner
-    PerfTest(const Int3& sections)
+    ReferencePerfTest()
     {
         auto total_start = std::chrono::high_resolution_clock::now();
 
         // Setup 
         
         auto setup_start = std::chrono::high_resolution_clock::now();
-
-        int mpi_size; 
-        MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-
-        int topologySize = sections.x * sections.y * sections.z;
-        if (topologySize > mpi_size)
-        {
-            std::cout << "Not enough processes for the test: " << mpi_size << "/" << topologySize << std::endl;
-            return;
-        }
-
-        topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::LoopXYZ, mpi_size);
-
-        if (!topology->isValidOnThisRank())
-            return;
-
-        int mpi_rank;
-        MPI_Comm_rank(topology->getTopologyCommunicator(), &mpi_rank);
 
         Int3 mainGridSize = Int3(1, 1, 1);
         for (int d = 0; d < dimension; d++) 
@@ -121,51 +98,21 @@ public:
         mainMaxCoords = constants::c * (FP3)mainGridSize;
         gridStep = (mainMaxCoords - mainMinCoords) / (FP3)mainGridSize;
 
-        std::vector<int> divisions[3] = {
-            {},
-            {}, 
-            {}
-        };
-        for (int i = 1; i < sections.x; i++)
-            divisions[0].push_back((mainGridSize.x / sections.x) * i);
-
-        for (int i = 1; i < sections.y; i++)
-            divisions[1].push_back((mainGridSize.y / sections.y) * i);
-
-        for (int i = 1; i < sections.z; i++)
-            divisions[2].push_back((mainGridSize.z / sections.z) * i);
-
-        Int3 localIndexOffset;
-        mpi::GridSlicer::getSubGridParameters(  minCoords, gridSize, localIndexOffset,
-                                                mainMinCoords, mainGridSize, 
-                                                gridStep, divisions, 
-                                                mpi_rank, topology);
+        minCoords = mainMinCoords;
+        gridSize = mainGridSize;
 
         grid.reset(new GridType(gridSize, minCoords, gridStep, gridSize));
-
-        fieldExchanger = std::make_shared<mpi::FieldExchanger>(grid->numCells, grid->numExternalCells);
 
         timeStep = 0.5 * FieldSolverType::getCourantConditionTimeStep(gridStep);
         numSteps = (int)((mainMaxCoords - mainMinCoords)[(int)axis] /
             (constants::c * timeStep) * 0.2);
 
         fieldSolver.reset(new FieldSolverType(grid.get(), timeStep));
-
-        mpi::BoundaryType boundaries[6] = { 
-            mpi::BoundaryType::Periodic, // +X
-            mpi::BoundaryType::Periodic, // -X
-            mpi::BoundaryType::Periodic, // +Y
-            mpi::BoundaryType::Periodic, // -Y
-            mpi::BoundaryType::Periodic, // +Z
-            mpi::BoundaryType::Periodic, // -Z
-        };
-        using BoundaryManager = mpi::FieldBoundaryManager<FieldSolverType, GridType, ReflectBoundaryConditionMonoDirectionFdtd>;
-        BoundaryManager::setupBoundaryConditions(fieldSolver, boundaries, topology, fieldExchanger, mpi_rank);
-
+        fieldSolver->setPeriodicalBoundaryConditions();
+        
         auto setup_end = std::chrono::high_resolution_clock::now();
         auto setup_duration = std::chrono::duration<double, std::milli>(setup_end - setup_start);
-        if (mpi_rank == 0)
-            std::cout << " Setup Time: " << setup_duration.count() << " ms" << std::endl;
+        std::cout << " Setup Time: " << setup_duration.count() << " ms" << std::endl;
 
         // Grid initialization
         auto grid_start = std::chrono::high_resolution_clock::now();
@@ -174,8 +121,7 @@ public:
 
         auto grid_end = std::chrono::high_resolution_clock::now();
         auto grid_duration = std::chrono::duration<double, std::milli>(grid_end - grid_start);
-        if (mpi_rank == 0)
-            std::cout << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
+        std::cout << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
 
         // Running
         auto run_start = std::chrono::high_resolution_clock::now();
@@ -187,8 +133,7 @@ public:
 
         auto run_end = std::chrono::high_resolution_clock::now();
         auto run_duration = std::chrono::duration<double, std::milli>(run_end - run_start);
-        if (mpi_rank == 0)
-            std::cout << " Run Time: " << run_duration.count() << " ms" << std::endl;
+        std::cout << " Run Time: " << run_duration.count() << " ms" << std::endl;
 
         // Verification
         #ifdef VERIFY
@@ -243,43 +188,21 @@ public:
                         }
                     }
 
-            std::cout << "RANK " << mpi_rank << " Verification Result: " << verified << std::endl;
+            std::cout << " Verification Result: " << verified << std::endl;
         #endif
 
         auto total_end = std::chrono::high_resolution_clock::now();
         auto total_duration = std::chrono::duration<double, std::milli>(total_end - total_start);
         
-        MPI_Barrier(topology->getTopologyCommunicator());
-
-        if (mpi_rank == 0)
-            std::cout << "Total Time: " << total_duration.count() << " ms" << std::endl;
+        std::cout << "Total Time: " << total_duration.count() << " ms" << std::endl;
     }
 };
 
 
-
-
 int main(int argc, char** argv)
 {
-    MPI_Init(&argc, &argv);
-
-    int mpi_size;
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
- 
-    //Int3 sections = Int3(1, 1, 1);
-
-    // Line over X topology
-    //sections = Int3(mpi_size, 1, 1);
-
-    // Volume fill topology
-    int dims[3] = {0, 0, 0};
-    MPI_Dims_create(mpi_size, 3, dims);
-    Int3 sections = Int3(dims[0], dims[1], dims[2]);
-
     // Running the test
-    PerfTest perfTest(sections);
-
-    MPI_Finalize();
+    ReferencePerfTest referencePerfTest;
 
     return 0;
 }
