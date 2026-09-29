@@ -20,8 +20,8 @@ enum class BoundaryType
 
 // Sets up field boundary conditions for subgrids
 // Template parameters specify FieldBoundaryCondition decendants that will be used
-// IMPORTANT: specified (in template parameters) FieldBoundaryCondition classes must work for a SINGLE DIRECTIOn over a single axis!
-// Such classes are usually have "MonoDirection" in their name
+// IMPORTANT: specified (in template parameters) FieldBoundaryCondition classes must work for a SINGLE DIRECTION over a single axis!
+// Such classes usually have "MonoDirection" in their name
 template<   class FieldSolverType, class GridType,
             class MonoDirectionReflectBoundaryConditionType>
 class FieldBoundaryManager
