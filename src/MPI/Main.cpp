@@ -13,6 +13,8 @@
 #include "Fdtd.h"
 #include "FieldBoundaryConditionFdtd.h"
 
+#include "MPI_ParticleUtils.h"
+
 #include "HiChi_MPI.h"
 
 using GridType = pfc::YeeGrid;
@@ -134,6 +136,8 @@ void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
 
 int main(int argc, char** argv)
 {
+    MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
+
     Int3 gridSize = Int3(20, 10, 10);
     FP3 minCoords = FP3(0, 0, 0);
     FP3 maxCoords = FP3(1, 1, 1);
