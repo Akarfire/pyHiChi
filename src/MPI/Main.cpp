@@ -12,6 +12,7 @@
 #include "Vectors.h"
 #include "Fdtd.h"
 #include "FieldBoundaryConditionFdtd.h"
+#include "Particle.h"
 
 #include "MPI_ParticleUtils.h"
 
@@ -22,6 +23,16 @@ using FieldSolverType = pfc::FDTD;
 using FP = pfc::FP;
 using FP3 = pfc::FP3;
 using Int3 = pfc::Int3;
+
+using ParticleT = pfc::Particle<pfc::Three>;
+
+namespace pfc {
+    namespace ParticleInfo {
+        std::vector<ParticleType> typesVector;
+        const ParticleType* types;
+        short numTypes;
+    } // namespace ParticleInfo
+} // namespace pica
 
 #define testFieldComponent Ex
 
@@ -118,7 +129,6 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
     std::cout << std::endl << std::endl;
 }
 
-
 void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
 {
     Int3 size = grid->numCells;
@@ -134,6 +144,110 @@ void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
     std::cout << std::endl << std::endl;
 }
 
+
+void setupParticles()
+{
+    pfc::ParticleInfo::typesVector = { { pfc::constants::electronMass, pfc::constants::electronCharge },
+        { pfc::constants::electronMass, -pfc::constants::electronCharge },
+        { pfc::constants::protonMass, -pfc::constants::electronCharge } };
+        pfc::ParticleInfo::types = &pfc::ParticleInfo::typesVector[0];
+        pfc::ParticleInfo::numTypes = sizeParticleTypes;
+}
+
+void debugPrintParticle(const ParticleT& p)
+{
+    std::cout << "Particle : " << p.getPosition().toString() << " : " << p.getMomentum().toString() << " : " << 
+        p.getWeight() << " : " << p.getGamma() << " : " << p.getType() << std::endl;
+}
+
+void debugPrintParticleArray(const std::vector<ParticleT>& array)
+{
+    std::cout << "Particle Array" << std::endl;
+    for (auto& p : array)
+        debugPrintParticle(p);
+
+    std::cout << endl;
+}
+
+int main(int argc, char** argv)
+{
+    setupParticles();
+
+    // MPI initialization
+    MPI_Init(&argc, &argv);
+
+    // MPI Data
+    int mpi_rank, mpi_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+    // Creating particle type
+    MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
+
+    // Test particle array
+    std::vector<ParticleT> test_particle_array;
+    size_t num_particles = 3;
+    test_particle_array.resize(num_particles); // Same size for all ranks
+
+    // Fill with particles
+    for (size_t i = 0; i < num_particles; i++)
+    {
+        test_particle_array[i] = ParticleT();
+        test_particle_array[i].setVelocity(pfc::Vector3<FP>(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
+        test_particle_array[i].setPosition(10.0 * pfc::Vector3<FP>(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
+        test_particle_array[i].setWeight((mpi_rank + 1) * 5);
+    }
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (mpi_rank == 0)
+    {
+        std::cout << "[RANK " << mpi_rank << "] ";
+        debugPrintParticleArray(test_particle_array);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if (mpi_rank == 1)
+    {
+        std::cout << "[RANK " << mpi_rank << "] ";
+        debugPrintParticleArray(test_particle_array);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+
+    // Send / Recv array of particles
+    if (mpi_rank == 0)
+    {
+        MPI_Send(test_particle_array.data(), num_particles, particle_type, 1, 0, MPI_COMM_WORLD);
+    }
+    else if (mpi_rank == 1)
+    {
+        MPI_Status status;
+        MPI_Recv(test_particle_array.data(), num_particles, particle_type, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    }
+
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (mpi_rank == 0)
+    {
+        std::cout << "[RANK " << mpi_rank << "] ";
+        debugPrintParticleArray(test_particle_array);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if (mpi_rank == 1)
+    {
+        std::cout << "[RANK " << mpi_rank << "] ";
+        debugPrintParticleArray(test_particle_array);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+
+    MPI_Finalize();
+    return 0;
+}
+
+/*
 int main(int argc, char** argv)
 {
     MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
@@ -243,3 +357,4 @@ int main(int argc, char** argv)
     MPI_Finalize();
     return 0;
 }
+*/
