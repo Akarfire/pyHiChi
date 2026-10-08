@@ -21,16 +21,29 @@ public:
     ParticleExchanger() {}
 
 private:
-    // ... If needed mpi types will be here ...
+    // Describes data, that is exchanged between ranks
+    template<int positionDimension, int momentumDimension>
+    struct SendData
+    {
+        // Header
+        int count;
+        int type_counts[pfc::sizeParticleTypes];
+
+        // Data
+        std::vector<double> positions[positionDimension];
+        std::vector<double> momentums[momentumDimension];
+        std::vector<double> weights;
+        std::vector<double> gammas;
+    };
+
+    using SendData3D = SendData<3, 3>;
 
 private:
     // Helper functions
 
-    // Returns an offset corresponding to the neighbouring rank, that a particle 
+    // Returns an offset corresponding to the neighboring rank, that a particle 
     // with the specified position shall be sent to
-    // If resulting offset is (0, 0, 0) : out_send = false, otherwise: out_send = true
-    pfc::Int3 getResponsibleNeighbour(  bool& out_send,
-                                        const pfc::FP3& position, 
+    pfc::Int3 getResponsibleNeighbor(  const pfc::FP3& position, 
                                         const pfc::FP3& lower_bound, 
                                         const pfc::FP3& upper_bound);
 
@@ -38,7 +51,8 @@ public:
 
     // Exchanges out-of-bound particles between MPI ranks
     void exchangeParticles( int mpi_rank, std::unique_ptr<Ensemble3d>& ensemble, 
-                            const pfc::FP3& lower_bound, const pfc::FP3& upper_bound);
+                            const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
+                            std::shared_ptr<class Topology> topology);
 
 };
 
