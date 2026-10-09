@@ -376,6 +376,19 @@ namespace pfc {
             is.read((char*)&typeIndex, sizeof(typeIndex));
         }
 
+        // Direct data access
+        const std::vector<typename ScalarType<PositionType>::Type>& getPositions(int dim) const { return positions[dim]; }
+        std::vector<typename ScalarType<PositionType>::Type>& getPositions(int dim) { return positions[dim]; }
+
+        const std::vector<typename ScalarType<MomentumType>::Type>& getMomentums(int dim) const { return ps[dim]; }
+        std::vector<typename ScalarType<MomentumType>::Type>& getMomentums(int dim) { return ps[dim]; }
+
+        const std::vector<WeightType>& getWeights() const { return weights; }
+        std::vector<WeightType>& getWeights() { return weights; }
+
+        const std::vector<GammaType>& getGammas() const { return gammas; }
+        std::vector<GammaType>& getGammas() { return gammas; }
+
     private:
         std::vector<typename ScalarType<PositionType>::Type> positions[positionDimension];
         std::vector<typename ScalarType<MomentumType>::Type> ps[momentumDimension];
