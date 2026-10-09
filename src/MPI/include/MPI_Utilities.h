@@ -38,6 +38,10 @@ static const pfc::Int3 DirectionToOffset[6] =
 // Returns the inverse of the specified direction
 Direction invertDirection(const Direction& direction);
 
+
+// Converts (0|+-1, 0|+-1, 0|+-1) type offsets to 0 - 26 indices
+static int offsetToCubeCornerID(int x, int y, int z);
+
 // Converts (0|+-1, 0|+-1, 0|+-1) type offsets to 0 - 26 indices
 static int offsetToCubeCornerID(const pfc::Int3& offset);
 
