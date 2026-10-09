@@ -14,10 +14,11 @@ namespace mpi
 {
 
 // Class responsible for exchanging particles between MPI ranks
+// All methods are static
 class ParticleExchanger final
 {
-public:
-    // Constructs necessary mpi types (if needed, not sure yet)
+private:
+    // Private constructor to prevent instancing
     ParticleExchanger() {}
 
 private:
@@ -41,18 +42,30 @@ private:
 private:
     // Helper functions
 
-    // Returns an offset corresponding to the neighboring rank, that a particle 
+    // Returns the cube corner id corresponding to the neighboring rank, that a particle 
     // with the specified position shall be sent to
-    pfc::Int3 getResponsibleNeighbor(  const pfc::FP3& position, 
+    static int getResponsibleNeighborID(FP x, FP y, FP z, 
                                         const pfc::FP3& lower_bound, 
                                         const pfc::FP3& upper_bound);
+
+    // Returns an offset corresponding to the neighboring rank, that a particle 
+    // with the specified position shall be sent to
+    static pfc::Int3 getResponsibleNeighbor(const pfc::FP3& position, 
+                                            const pfc::FP3& lower_bound, 
+                                            const pfc::FP3& upper_bound);
+
+
+    // Prepares SendData for every direction, by extracting out-of-bound particles from the ensemble.
+    // Particles are deleted from the ensemble
+    static void prepareSendData(SendData3D out_data[27], std::unique_ptr<Ensemble3d>& ensemble, 
+                                const pfc::FP3& lower_bound, const pfc::FP3& upper_bound);
 
 public:
 
     // Exchanges out-of-bound particles between MPI ranks
-    void exchangeParticles( int mpi_rank, std::unique_ptr<Ensemble3d>& ensemble, 
-                            const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                            std::shared_ptr<class Topology> topology);
+    static void exchangeParticles(  int mpi_rank, std::unique_ptr<Ensemble3d>& ensemble, 
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
+                                    std::shared_ptr<class Topology> topology);
 
 };
 
