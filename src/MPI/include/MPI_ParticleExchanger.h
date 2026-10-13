@@ -24,11 +24,11 @@ private:
 private:
     // Describes data, that is exchanged between ranks
     template<int positionDimension, int momentumDimension>
-    struct SendData
+    struct ParticleData_SoA
     {
         // Header
-        int count;
-        int type_counts[pfc::sizeParticleTypes];
+        int count = 0;
+        int type_counts[pfc::sizeParticleTypes] = {};
 
         // Data
         std::vector<double> positions[positionDimension];
@@ -37,7 +37,12 @@ private:
         std::vector<double> gammas;
     };
 
-    using SendData3D = SendData<3, 3>;
+    using ParticleData3D = ParticleData_SoA<3, 3>;
+
+    static const int PARTICLE_HEADER_TAG_BASE = 100;
+    static const int PARTICLE_PAYLOAD_TAG_BASE = 200;
+
+    static const int NO_DIRECTION = 13;
 
 private:
     // Helper functions
@@ -57,7 +62,7 @@ private:
 
     // Prepares SendData for every direction, by extracting out-of-bound particles from the ensemble.
     // Particles are deleted from the ensemble
-    static void prepareSendData(SendData3D out_data[27], std::unique_ptr<Ensemble3d>& ensemble, 
+    static void prepareSendData(ParticleData3D out_data[27], std::unique_ptr<Ensemble3d>& ensemble, 
                                 const pfc::FP3& lower_bound, const pfc::FP3& upper_bound);
 
 public:
@@ -65,7 +70,7 @@ public:
     // Exchanges out-of-bound particles between MPI ranks
     static void exchangeParticles(  int mpi_rank, std::unique_ptr<Ensemble3d>& ensemble, 
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                                    std::shared_ptr<class Topology> topology);
+                                    std::shared_ptr<class Topology> topology, MPI_Comm communicator);
 
 };
 
