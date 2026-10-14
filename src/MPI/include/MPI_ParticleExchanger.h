@@ -13,51 +13,23 @@
 namespace mpi
 {
 
+class ParticleExchanger
+{
+protected:
+    static const int PARTICLE_HEADER_TAG_BASE = 100;
+    static const int PARTICLE_PAYLOAD_TAG_BASE = 200;
+};
+
 // Class responsible for exchanging particles between MPI ranks
 // All methods are static
-class ParticleExchanger final
+class ParticleExchanger_Uniform_SoA
 {
 private:
     // Private constructor to prevent instancing
-    ParticleExchanger() {}
-
-private:
-    // Describes data, that is exchanged between ranks
-    template<int positionDimension, int momentumDimension>
-    struct ParticleData_SoA
-    {
-        // Header
-        int count = 0;
-        int type_counts[pfc::sizeParticleTypes] = {};
-
-        // Data
-        std::vector<double> positions[positionDimension];
-        std::vector<double> momentums[momentumDimension];
-        std::vector<double> weights;
-        std::vector<double> gammas;
-    };
-
-    using ParticleData3D = ParticleData_SoA<3, 3>;
-
-    static const int PARTICLE_HEADER_TAG_BASE = 100;
-    static const int PARTICLE_PAYLOAD_TAG_BASE = 200;
-
-    static const int NO_DIRECTION = 13;
+    ParticleExchanger_Uniform_SoA() {}
 
 private:
     // Helper functions
-
-    // Returns the cube corner id corresponding to the neighboring rank, that a particle 
-    // with the specified position shall be sent to
-    static int getResponsibleNeighborID(FP x, FP y, FP z, 
-                                        const pfc::FP3& lower_bound, 
-                                        const pfc::FP3& upper_bound);
-
-    // Returns an offset corresponding to the neighboring rank, that a particle 
-    // with the specified position shall be sent to
-    static pfc::Int3 getResponsibleNeighbor(const pfc::FP3& position, 
-                                            const pfc::FP3& lower_bound, 
-                                            const pfc::FP3& upper_bound);
 
 
     // Prepares SendData for every direction, by extracting out-of-bound particles from the ensemble.

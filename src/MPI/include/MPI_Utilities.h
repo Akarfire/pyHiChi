@@ -18,6 +18,10 @@ static pfc::Int3 MPI_INVALID_SECTION = pfc::Int3(MPI_INVALID_RANK, MPI_INVALID_R
 // Same rank (zero offset)
 static pfc::Int3 MPI_SAME_RANK = pfc::Int3(0, 0, 0);
 
+// Used with offsetToCubeCornerID
+// Marks the (0, 0, 0) offset
+static const int NO_DIRECTION = 13;
+
 // Defines the direction, in which the transmission will be performed (From sender to receiver)
 enum class Direction
 {

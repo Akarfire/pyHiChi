@@ -9,66 +9,8 @@
 namespace mpi
 {
 
-// Returns the cube corner id corresponding to the neighboring rank, that a particle 
-// with the specified position shall be sent to
-int ParticleExchanger::getResponsibleNeighborID(   FP x, FP y, FP z, 
-                                const pfc::FP3& lower_bound, 
-                                const pfc::FP3& upper_bound
-                                )
-{
-    // Formula without branching (to make it faster, since it runs per particle)
-
-    // If particle is below the lower bound (0 or 1)
-    int lower_x = x < lower_bound.x;
-    int lower_y = y < lower_bound.y;
-    int lower_z = z < lower_bound.z;
-
-    // If particle is above the upper bound (0 or 1)
-    int higher_x = x > upper_bound.x;
-    int higher_y = y > upper_bound.y;
-    int higher_z = z > upper_bound.z;
-
-    // higher_c and lower_c are NEVER equal to 1 at the same time
-
-    // Constructing offsets
-    int ix = higher_x - lower_x;
-    int iy = higher_y - lower_y;
-    int iz = higher_z - lower_z;
-
-    return offsetToCubeCornerID(ix, iy, iz);
-}
-
-// Returns an offset corresponding to the neighbouring rank, that a particle 
-// with the specified position shall be sent to
-pfc::Int3 ParticleExchanger::getResponsibleNeighbor(   const pfc::FP3& position, 
-                                                        const pfc::FP3& lower_bound, 
-                                                        const pfc::FP3& upper_bound)
-{    
-    // Formula without branching (to make it faster, since it runs per particle)
-
-    // If particle is below the lower bound (0 or 1)
-    int lower_x = position.x < lower_bound.x;
-    int lower_y = position.y < lower_bound.y;
-    int lower_z = position.z < lower_bound.z;
-
-    // If particle is above the upper bound (0 or 1)
-    int higher_x = position.x > upper_bound.x;
-    int higher_y = position.y > upper_bound.y;
-    int higher_z = position.z > upper_bound.z;
-
-    // higher_c and lower_c are NEVER equal to 1 at the same time
-
-    // Constructing offsets
-    int x = higher_x - lower_x;
-    int y = higher_y - lower_y;
-    int z = higher_z - lower_z;
-
-    return pfc::Int3(x, y, z);
-}
-
-
 // Prepares ParticleData_SoA for every direction
-void ParticleExchanger::prepareSendData(ParticleData3D out_data[27], std::unique_ptr<Ensemble3d>& ensemble, 
+void ParticleExchanger_Uniform_SoA::prepareSendData(ParticleData3D out_data[27], std::unique_ptr<Ensemble3d>& ensemble, 
                                         const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
 {
     // Send indices for every direction
