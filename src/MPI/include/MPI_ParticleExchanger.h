@@ -72,10 +72,46 @@ public:
         statuses.resize(requests.size());
         MPI_Waitall(requests.size(), requests.data(), statuses.data());
 
-        // Exchanging data
-        // ... TO DO ...
-    }
+        // Make sure everyone has completed header exchange
+        MPI_Barrier(communicator);
 
+        // Exchanging payload
+        requests.clear();
+
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
+
+            pfc::Int3 send_offset = cubeCornerIdToOffset(dir);
+            pfc::Int3 recv_offset = -1 * send_offset;
+
+            int send_neighbor = topology->getNeighbor(mpi_rank, send_offset);
+            int recv_neighbor = topology->getNeighbor(mpi_rank, recv_offset);
+
+            // Sending
+            if (send_neighbor != MPI_INVALID_RANK && send_data[dir].getCount() > 0)
+            {
+                requests.emplace_back();
+                MPI_Isend(  send_data[dir].payload, ParticleDataType::payloadMpiDataType, send_data[dir].getPayloadMpiSize(), 
+                            send_neighbor, PARTICLE_PAYLOAD_TAG_BASE + dir, communicator, &requests.back());
+            }
+            
+            // Receiving
+            if (recv_neighbor != MPI_INVALID_RANK && recv_data[dir].getCount() > 0)
+            {
+                requests.emplace_back();
+                MPI_Irecv(  recv_data[dir].payload, ParticleDataType::payloadMpiDataType, recv_data[dir].getPayloadMpiSize(), 
+                            recv_neighbor, PARTICLE_PAYLOAD_TAG_BASE + dir, communicator, &requests.back());
+            };
+        }
+
+        // Waiting for communication to complete
+        statuses.resize(requests.size());
+        MPI_Waitall(requests.size(), requests.data(), statuses.data());
+
+        // Make sure everyone has completed payload exchange
+        MPI_Barrier(communicator);
+    }
 };
 
 }
