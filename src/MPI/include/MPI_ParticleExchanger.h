@@ -13,36 +13,68 @@
 namespace mpi
 {
 
-class ParticleExchanger
-{
-protected:
-    static const int PARTICLE_HEADER_TAG_BASE = 100;
-    static const int PARTICLE_PAYLOAD_TAG_BASE = 200;
-};
-
 // Class responsible for exchanging particles between MPI ranks
 // All methods are static
-class ParticleExchanger_Uniform_SoA
+template<class ParticleDataType>
+class ParticleExchanger final
 {
 private:
     // Private constructor to prevent instancing
-    ParticleExchanger_Uniform_SoA() {}
+    ParticleExchanger() {}
 
 private:
-    // Helper functions
-
-
-    // Prepares SendData for every direction, by extracting out-of-bound particles from the ensemble.
-    // Particles are deleted from the ensemble
-    static void prepareSendData(ParticleData3D out_data[27], std::unique_ptr<Ensemble3d>& ensemble, 
-                                const pfc::FP3& lower_bound, const pfc::FP3& upper_bound);
+    static const int PARTICLE_HEADER_TAG_BASE = 100;
+    static const int PARTICLE_PAYLOAD_TAG_BASE = 200;
 
 public:
 
     // Exchanges out-of-bound particles between MPI ranks
-    static void exchangeParticles(  int mpi_rank, std::unique_ptr<Ensemble3d>& ensemble, 
-                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                                    std::shared_ptr<class Topology> topology, MPI_Comm communicator);
+    // send_data is sent to other ranks
+    // All data receinved from other ranks is put into recv_data
+    // In send_data and recv_data (0, 0, 0) offset is mapped to 13, so it will always be emtpy
+    static void exchangeParticles(  const ParticleDataType send_data[27], ParticleDataType recv_data[27],
+                                    int mpi_rank, std::shared_ptr<class Topology> topology, MPI_Comm communicator)
+    {
+        std::vector<MPI_Request> requests;
+        requests.reserve(26 * 2); // 1 send request and 1 recv requst for each direction
+        std::vector<MPI_Status> statuses;
+
+        // Exchanging headers
+
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
+
+            pfc::Int3 send_offset = cubeCornerIdToOffset(dir);
+            pfc::Int3 recv_offset = -1 * send_offset;
+
+            int send_neighbor = topology->getNeighbor(mpi_rank, send_offset);
+            int recv_neighbor = topology->getNeighbor(mpi_rank, recv_offset);
+
+            // Sending
+            if (send_neighbor != MPI_INVALID_RANK)
+            {
+                requests.emplace_back();
+                MPI_Isend(  send_data[dir].header, ParticleDataType::headerMpiSize, ParticleDataType::headerMpiDataType, 
+                            send_neighbor, PARTICLE_HEADER_TAG_BASE + dir, communicator, &requests.back());
+            }
+            
+            // Receiving
+            if (recv_neighbor != MPI_INVALID_RANK)
+            {
+                requests.emplace_back();
+                MPI_Irecv(  recv_data[dir].header, ParticleDataType::headerMpiSize, ParticleDataType::headerMpiDataType, 
+                            recv_neighbor, PARTICLE_HEADER_TAG_BASE + dir, communicator, &requests.back());
+            };
+        }
+
+        // Waiting for communication to complete
+        statuses.resize(requests.size());
+        MPI_Waitall(requests.size(), requests.data(), statuses.data());
+
+        // Exchanging data
+        // ... TO DO ...
+    }
 
 };
 
