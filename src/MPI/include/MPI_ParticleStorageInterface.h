@@ -10,13 +10,15 @@
 
 #include "MPI_Utilities.h"
 #include "MPI_ParticleUtils.h"
+#include "MPI_ParticleData.h"
 
 namespace mpi
 {
 
-// Extracts out-of-bound particles from the particle array and prepares them to be sent to anouther rank
+// 1) Extracts out-of-bound particles from the particle array and prepares them to be sent to another rank
+// 2) Inserts particles received from other ranks into the particle array
 // Base class with common helper functions
-class ParticleCollector
+class ParticleParticleStorageInterface
 {
 protected:
     
@@ -56,13 +58,18 @@ public:
     static void collectParticles(   ParticleArrayType* particleArray, 
                                     ParticleDataType outParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
+
+    static void insertParticles(    pfc::ParticleArray3d* particleArray, 
+                                    const ParticleData3D_Uniform_SoA inParticleData[27],
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
 */
 };
 
 
-// Extracts out-of-bound particles from the particle array and prepares them to be sent to anouther rank
-// Version for a uniform particle array with SoA data type
-class ParticleCollector_Uniform_SoA : public ParticleCollector
+// 1) Extracts out-of-bound particles from the particle array and prepares them to be sent to another rank
+// 2) Inserts particles received from other ranks into the particle array
+// Version for a 3D uniform particle array with SoA data type
+class ParticleParticleStorageInterface3D_Uniform_SoA : public ParticleParticleStorageInterface
 {
 public:
     static void collectParticles(   pfc::ParticleArray3d* particleArray, 
@@ -167,19 +174,13 @@ public:
             particleArray->deleteParticle(deletion_indices[i]);
         }
     }
-};
 
-// Extracts out-of-bound particles from the particle array and prepares them to be sent to anouther rank
-// Version for a uniform particle array with AoS data type
-// class ParticleCollector_Uniform_AoS
-// {
-// public:
-//     static void collectParticles(   ParticleArrayAoS3d* particleArray, 
-//                                     ParticleData3D_Uniform_AoS outParticleData[27],
-//                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
-//     {
-        
-//     }
-// };
+    static void insertParticles(    pfc::ParticleArray3d* particleArray, 
+                                    const ParticleData3D_Uniform_SoA inParticleData[27],
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
+    {
+        // ... TO DO ...
+    }
+};
 
 }
