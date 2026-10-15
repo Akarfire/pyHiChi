@@ -18,7 +18,7 @@ namespace mpi
 // 1) Extracts out-of-bound particles from the particle array and prepares them to be sent to another rank
 // 2) Inserts particles received from other ranks into the particle array
 // Base class with common helper functions
-class ParticleParticleStorageInterface
+class ParticleStorageInterface
 {
 protected:
     
@@ -69,7 +69,7 @@ public:
 // 1) Extracts out-of-bound particles from the particle array and prepares them to be sent to another rank
 // 2) Inserts particles received from other ranks into the particle array
 // Version for a 3D uniform particle array with SoA data type
-class ParticleParticleStorageInterface3D_Uniform_SoA : public ParticleParticleStorageInterface
+class ParticleStorageInterface3D_Uniform_SoA : public ParticleStorageInterface
 {
 public:
     static void collectParticles(   pfc::ParticleArray3d* particleArray, 
