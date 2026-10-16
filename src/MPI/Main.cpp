@@ -15,6 +15,8 @@
 #include "Particle.h"
 
 #include "MPI_ParticleUtils.h"
+#include "MPI_ParticleStorageInterface.h"
+#include "MPI_ParticleExchanger.h"
 
 #include "HiChi_MPI.h"
 
@@ -171,6 +173,8 @@ void debugPrintParticleArray(const std::vector<ParticleT>& array)
 
 int main(int argc, char** argv)
 {
+    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA> particleExchanger;
+
     setupParticles();
 
     // MPI initialization

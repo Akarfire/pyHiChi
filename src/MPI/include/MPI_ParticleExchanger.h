@@ -31,13 +31,13 @@ public:
             if (ParticleDataType::useCustomHeaderMpiDatatype)
                 headerType = customMpiDatatypeBuffer[ParticleDataType::headerCustomMpiDatatypeIndex];
             else
-                headerType = ParticleDataType::headerMpiDataType
+                headerType = ParticleDataType::headerMpiDataType;
 
             // Payload type
             if (ParticleDataType::useCustomPayloadMpiDatatype)
                 payloadType = customMpiDatatypeBuffer[ParticleDataType::payloadCustomMpiDatatypeIndex];
             else
-                payloadType = ParticleDataType::payloadMpiDataType
+                payloadType = ParticleDataType::payloadMpiDataType;
         }
     }
 

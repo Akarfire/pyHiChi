@@ -19,28 +19,4 @@ Direction invertDirection(const Direction& direction)
     }
 }
 
-// Converts (0|+-1, 0|+-1, 0|+-1) type offsets to 0 - 26 indices
-static int offsetToCubeCornerID(int x, int y, int z)
-{
-    return (x + 1) + (y + 1) * 3 + (z + 1) * 9;
-}
-
-// Converts (0|+-1, 0|+-1, 0|+-1) type offsets to 0 - 26 indices
-int offsetToCubeCornerID(const pfc::Int3& offset)
-{
-    return offsetToCubeCornerID(offset.x, offset.y, offset.z);
-}
-
-// Converts 0 - 26 indices to (0|+-1, 0|+-1, 0|+-1) type offsets 
-pfc::Int3 cubeCornerIdToOffset(int id)
-{
-    pfc::Int3 offset;
-
-    offset.z = id / 9 - 1;
-    offset.y = (id % 9) / 3 - 1;
-    offset.x = id % 3 - 1;
-
-    return offset;
-}
-
 }

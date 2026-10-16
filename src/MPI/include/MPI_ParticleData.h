@@ -37,10 +37,10 @@ struct ParticleData
     int getPayloadMpiSize() const { return <resolve based on header>; }
 
     // Custom mpi types support
-    static const useCustomHeaderMpiDatatype = <true / false>;
-    static const useCustomPayloadMpiDatatype = <true / false>;
-    static int headerCustomMpiDatatype = <index (same as in createCustomMpiDatatypes) or -1 if not used>;
-    static int payloadCustomMpiDatatype = <index (same as in createCustomMpiDatatypes) or -1 if not used>;
+    static const bool useCustomHeaderMpiDatatype = <true / false>;
+    static const bool useCustomPayloadMpiDatatype = <true / false>;
+    static const int headerCustomMpiDatatype = <index (same as in createCustomMpiDatatypes) or -1 if not used>;
+    static const int payloadCustomMpiDatatype = <index (same as in createCustomMpiDatatypes) or -1 if not used>;
     static void createCustomMpiDatatypes(std::vector<MPI_Datatype>& outCustomTypeBuffer) 
     { 
         // Create types and put them into outCustomTypeBuffer onto desired indices
@@ -65,10 +65,12 @@ struct ParticleData_Uniform_SoA
     std::vector<pfc::FP> payload;
 
     // Number of double values per each particle
-    constexpr int perParticleDataSize = 
-          static_cast<int>(dimension) // Position components
-        + 3 // Momentum always has 3 components
-        + 2; // Weight and Gamma
+    static inline constexpr int perParticleDataSize()
+    { 
+        return  static_cast<int>(dimension) // Position components
+                + 3 // Momentum always has 3 components
+                + 2; // Weight and Gamma
+    }
 
     // Accessors
 
@@ -77,7 +79,7 @@ struct ParticleData_Uniform_SoA
     void setCount(int count, bool update_payload_size = true) 
     { 
         header[0] = count; 
-        payload.reserve(count * perParticleDataSize);
+        payload.reserve(count * perParticleDataSize());
     }
 
     // Type of particles stored in the data
@@ -91,13 +93,13 @@ struct ParticleData_Uniform_SoA
 
     static const MPI_Datatype payloadMpiDataType = MPI_DOUBLE;
     // Only valid after header is written
-    int getPayloadMpiSize() const { return header[0] * perParticleDataSize; }
+    int getPayloadMpiSize() const { return header[0] * perParticleDataSize(); }
 
     // Custom mpi types support
-    static const useCustomHeaderMpiDatatype = false;
-    static const useCustomPayloadMpiDatatype = false;
-    static int headerCustomMpiDatatypeIndex = -1;
-    static int payloadCustomMpiDatatypeIndex = -1;
+    static const bool useCustomHeaderMpiDatatype = false;
+    static const bool useCustomPayloadMpiDatatype = false;
+    static const int headerCustomMpiDatatypeIndex = -1;
+    static const int payloadCustomMpiDatatypeIndex = -1;
     static void createCustomMpiDatatypes(std::vector<MPI_Datatype>& outCustomTypeBuffer) {}
 };
 
