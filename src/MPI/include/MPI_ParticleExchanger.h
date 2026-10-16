@@ -18,13 +18,53 @@ namespace mpi
 template<class ParticleDataType>
 class ParticleExchanger final
 {
-private:
-    // Private constructor to prevent instancing
-    ParticleExchanger() {}
+public:
+    ParticleExchanger() 
+    {
+        // Creating custom mpi types if necessary
+        if (ParticleDataType::useCustomHeaderMpiDatatype || ParticleDataType::useCustomPayloadMpiDatatype)
+        {
+            ParticleDataType::createCustomMpiDatatypes(customMpiDatatypeBuffer);
+
+            // Resolving types
+            // Header type
+            if (ParticleDataType::useCustomHeaderMpiDatatype)
+                headerType = customMpiDatatypeBuffer[ParticleDataType::headerCustomMpiDatatypeIndex];
+            else
+                headerType = ParticleDataType::headerMpiDataType
+
+            // Payload type
+            if (ParticleDataType::useCustomPayloadMpiDatatype)
+                payloadType = customMpiDatatypeBuffer[ParticleDataType::payloadCustomMpiDatatypeIndex];
+            else
+                payloadType = ParticleDataType::payloadMpiDataType
+        }
+    }
+
+    ~ParticleExchanger()
+    {
+        // Freeing custom mpi data types
+        int mpiInit;
+        MPI_Initialized(&mpiInit);
+
+        int mpiFinalized;
+        MPI_Finalized(&mpiFinalized);
+
+        if (mpiInit && !mpiFinalized)
+            for (int i = 0; i < customMpiDatatypeBuffer.size(); i++)
+                MPI_Type_free(&customMpiDatatypeBuffer[i]);
+    }
 
 private:
     static const int PARTICLE_HEADER_TAG_BASE = 100;
     static const int PARTICLE_PAYLOAD_TAG_BASE = 200;
+
+    // Custom mpi types are created in ParticleData, but stored in particle exchanger
+    std::vector<MPI_Datatype> customMpiDatatypeBuffer;
+
+    // Resolved types
+    MPI_Datatype headerType = -1;
+    MPI_Datatype payloadType = -1;
 
 public:
 
@@ -40,7 +80,6 @@ public:
         std::vector<MPI_Status> statuses;
 
         // Exchanging headers
-
         for (int dir = 0; dir < 27; dir++)
         {
             if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
@@ -55,7 +94,7 @@ public:
             if (send_neighbor != MPI_INVALID_RANK)
             {
                 requests.emplace_back();
-                MPI_Isend(  send_data[dir].header, ParticleDataType::headerMpiSize, ParticleDataType::headerMpiDataType, 
+                MPI_Isend(  send_data[dir].header, ParticleDataType::headerMpiSize, headerType, 
                             send_neighbor, PARTICLE_HEADER_TAG_BASE + dir, communicator, &requests.back());
             }
             
@@ -63,7 +102,7 @@ public:
             if (recv_neighbor != MPI_INVALID_RANK)
             {
                 requests.emplace_back();
-                MPI_Irecv(  recv_data[dir].header, ParticleDataType::headerMpiSize, ParticleDataType::headerMpiDataType, 
+                MPI_Irecv(  recv_data[dir].header, ParticleDataType::headerMpiSize, headerType, 
                             recv_neighbor, PARTICLE_HEADER_TAG_BASE + dir, communicator, &requests.back());
             };
         }
@@ -78,6 +117,7 @@ public:
         // Exchanging payload
         requests.clear();
 
+        // Resolving type
         for (int dir = 0; dir < 27; dir++)
         {
             if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
@@ -92,7 +132,7 @@ public:
             if (send_neighbor != MPI_INVALID_RANK && send_data[dir].getCount() > 0)
             {
                 requests.emplace_back();
-                MPI_Isend(  send_data[dir].payload, ParticleDataType::payloadMpiDataType, send_data[dir].getPayloadMpiSize(), 
+                MPI_Isend(  send_data[dir].payload, send_data[dir].getPayloadMpiSize(), payloadType, 
                             send_neighbor, PARTICLE_PAYLOAD_TAG_BASE + dir, communicator, &requests.back());
             }
             
@@ -100,7 +140,7 @@ public:
             if (recv_neighbor != MPI_INVALID_RANK && recv_data[dir].getCount() > 0)
             {
                 requests.emplace_back();
-                MPI_Irecv(  recv_data[dir].payload, ParticleDataType::payloadMpiDataType, recv_data[dir].getPayloadMpiSize(), 
+                MPI_Irecv(  recv_data[dir].payload, recv_data[dir].getPayloadMpiSize(), payloadType, 
                             recv_neighbor, PARTICLE_PAYLOAD_TAG_BASE + dir, communicator, &requests.back());
             };
         }
@@ -108,9 +148,6 @@ public:
         // Waiting for communication to complete
         statuses.resize(requests.size());
         MPI_Waitall(requests.size(), requests.data(), statuses.data());
-
-        // Make sure everyone has completed payload exchange
-        MPI_Barrier(communicator);
     }
 };
 
