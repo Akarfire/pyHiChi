@@ -27,6 +27,9 @@ struct ParticleData
     // Count of all stored particles
     int getCount() const { return <resolve based on header>; }
 
+    // Type of particles stored in the data
+    int getType() const { return <resolve based on header>; }
+
     // MPI Communication data
 
     static const MPI_Datatype headerMpiDataType = MPI_INT;

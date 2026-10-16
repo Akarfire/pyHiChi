@@ -179,7 +179,70 @@ public:
                                     const ParticleData3D_Uniform_SoA inParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
     {
-        // ... TO DO ...
+        // Type check
+        if (particleArray->getType() != inParticleData[0].getType())
+            throw std::runtime_error("MPI PARTICLE STORAGE INTEFACE : Attempted to insert particles with incorrect type!");
+
+        // Cache initial write index before resizing the buffers
+        int writeIndex = particleArray->size();
+
+        // Reserving space for particles
+        int totalCount = 0;
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
+            totalCount += inParticleData[dir].getCount();
+        }
+
+        int reserveSize = totalCount + particleArray->size();
+
+        particleArray->getPositions(0).resize(reserveSize);
+        particleArray->getPositions(1).resize(reserveSize);
+        particleArray->getPositions(2).resize(reserveSize);
+
+        particleArray->getMomentums(0).resize(reserveSize);
+        particleArray->getMomentums(1).resize(reserveSize);
+        particleArray->getMomentums(2).resize(reserveSize);
+
+        particleArray->getWeights().resize(reserveSize);
+        particleArray->getGammas().resize(reserveSize);
+
+        // Unpack loop
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue;
+
+            const ParticleData3D_Uniform_SoA &src = inParticleData[dir];
+            int count = src.getCount();
+
+            if (count == 0) continue;
+
+            // Positions
+            std::memcpy(particleArray->getPositions(0).data() + writeIndex,
+                        src.payload.data() + 0 * count, count * sizeof(pfc::FP));
+            std::memcpy(particleArray->getPositions(1).data() + writeIndex,
+                        src.payload.data() + 1 * count, count * sizeof(pfc::FP));
+            std::memcpy(particleArray->getPositions(2).data() + writeIndex,
+                        src.payload.data() + 2 * count, count * sizeof(pfc::FP));
+
+            // Momentums
+            std::memcpy(particleArray->getMomentums(0).data() + writeIndex,
+                        src.payload.data() + 3 * count, count * sizeof(pfc::FP));
+            std::memcpy(particleArray->getMomentums(1).data() + writeIndex,
+                        src.payload.data() + 4 * count, count * sizeof(pfc::FP));
+            std::memcpy(particleArray->getMomentums(2).data() + writeIndex,
+                        src.payload.data() + 5 * count, count * sizeof(pfc::FP));
+
+            // Weight
+            std::memcpy(particleArray->getWeights().data() + writeIndex,
+                        src.payload.data() + 6 * count, count * sizeof(pfc::FP));
+
+            // Gamma
+            std::memcpy(particleArray->getGammas().data() + writeIndex,
+                        src.payload.data() + 7 * count, count * sizeof(pfc::FP));
+
+            writeIndex += count;
+        }
     }
 };
 
