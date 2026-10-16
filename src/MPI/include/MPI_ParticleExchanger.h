@@ -73,8 +73,10 @@ public:
     // All data receinved from other ranks is put into recv_data
     // In send_data and recv_data (0, 0, 0) offset is mapped to 13, so it will always be emtpy
     static void exchangeParticles(  const ParticleDataType send_data[27], ParticleDataType recv_data[27],
-                                    int mpi_rank, std::shared_ptr<class Topology> topology, MPI_Comm communicator)
+                                    int mpi_rank, std::shared_ptr<class Topology> topology)
     {
+        MPI_Comm communicator = topology->getTopologyCommunicator();
+
         std::vector<MPI_Request> requests;
         requests.reserve(26 * 2); // 1 send request and 1 recv requst for each direction
         std::vector<MPI_Status> statuses;
