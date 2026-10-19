@@ -20,18 +20,19 @@ struct ParticleData
     int header[...] = {};
 
     // Data
-    std::vector<pfc::FP> payload;
+    std::vector<PayloadDataType> payload;
 
     // Accessors
 
     // Count of all stored particles
+    // Total count of stored particles of all types
     int getCount() const { return <resolve based on header>; }
 
-    // Type of particles stored in the data
-    int getType() const { return <resolve based on header>; }
+    // Per type data access
+    int getTypeCount(int type) const { <resolve based on header>; }
+    PayloadDataType* getTypePayload(int type) { return <pointer to payload section for this type>; } 
 
     // MPI Communication data
-
     static const MPI_Datatype headerMpiDataType = MPI_INT;
     static const int headerMpiSize = 2;
 
@@ -53,6 +54,7 @@ struct ParticleData
 */
 
 // Describes data, that is exchanged between ranks
+// Single type
 template<pfc::Dimension dimension>
 struct ParticleData_Uniform_SoA
 {
@@ -84,13 +86,15 @@ struct ParticleData_Uniform_SoA
         header[0] = count; 
         payload.reserve(count * perParticleDataSize());
     }
-
-    // Type of particles stored in the data
+    // Type (for message validation only)
     int getType() const { return header[1]; }
-    void setType(int type) { header[1] = type; } 
+    void setType(int type) { header[1] = type; }
+
+    // Per type data access (any type in this case)
+    int getTypeCount(int type) const { return header[0]; }
+    const pfc::FP* getTypePayload(int type) const { return payload.data(); } 
 
     // MPI Communication data
-
     static const MPI_Datatype headerMpiDataType = MPI_INT;
     static const int headerMpiSize = 2;
 

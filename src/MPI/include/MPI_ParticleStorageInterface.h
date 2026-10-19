@@ -57,11 +57,13 @@ protected:
 public:
     static void collectParticles(   ParticleArrayType* particleArray, 
                                     ParticleDataType outParticleData[27],
-                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
+                                    int mpi_rank, std::shared_ptr<class Topology> topology)
 
     static void insertParticles(    pfc::ParticleArray3d* particleArray, 
                                     const ParticleData3D_Uniform_SoA inParticleData[27],
-                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
+                                    int mpi_rank, std::shared_ptr<class Topology> topology)
 */
 };
 
@@ -74,7 +76,8 @@ class ParticleStorageInterface3D_Uniform_SoA : public ParticleStorageInterface
 public:
     static void collectParticles(   pfc::ParticleArray3d* particleArray, 
                                     ParticleData3D_Uniform_SoA outParticleData[27],
-                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
+                                    int mpi_rank, std::shared_ptr<class Topology> topology)
     {
         // Send indices for every direction
         // (0, 0, 0) offset is mapped to 13, so it will always be emtpy
@@ -177,9 +180,10 @@ public:
 
     static void insertParticles(    pfc::ParticleArray3d* particleArray, 
                                     const ParticleData3D_Uniform_SoA inParticleData[27],
-                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound)
+                                    const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
+                                    int mpi_rank, std::shared_ptr<class Topology> topology)
     {
-        // Type check
+        // Type check (since ParticleData3D_Uniform_SoA is single type)
         if (particleArray->getType() != inParticleData[0].getType())
             throw std::runtime_error("MPI PARTICLE STORAGE INTEFACE : Attempted to insert particles with incorrect type!");
 
@@ -191,7 +195,7 @@ public:
         for (int dir = 0; dir < 27; dir++)
         {
             if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
-            totalCount += inParticleData[dir].getCount();
+            totalCount += inParticleData[dir].getTypeCount(particleArray->getType());
         }
 
         int reserveSize = totalCount + particleArray->size();
@@ -213,33 +217,34 @@ public:
             if (dir == NO_DIRECTION) continue;
 
             const ParticleData3D_Uniform_SoA &src = inParticleData[dir];
-            int count = src.getCount();
+            int count = src.getTypeCount(particleArray->getType());
+            const pfc::FP *data = src.getTypePayload(particleArray->getType());
 
             if (count == 0) continue;
 
             // Positions
             std::memcpy(particleArray->getPositions(0).data() + writeIndex,
-                        src.payload.data() + 0 * count, count * sizeof(pfc::FP));
+                        data + 0 * count, count * sizeof(pfc::FP));
             std::memcpy(particleArray->getPositions(1).data() + writeIndex,
-                        src.payload.data() + 1 * count, count * sizeof(pfc::FP));
+                        data + 1 * count, count * sizeof(pfc::FP));
             std::memcpy(particleArray->getPositions(2).data() + writeIndex,
-                        src.payload.data() + 2 * count, count * sizeof(pfc::FP));
+                        data + 2 * count, count * sizeof(pfc::FP));
 
             // Momentums
             std::memcpy(particleArray->getMomentums(0).data() + writeIndex,
-                        src.payload.data() + 3 * count, count * sizeof(pfc::FP));
+                        data + 3 * count, count * sizeof(pfc::FP));
             std::memcpy(particleArray->getMomentums(1).data() + writeIndex,
-                        src.payload.data() + 4 * count, count * sizeof(pfc::FP));
+                        data + 4 * count, count * sizeof(pfc::FP));
             std::memcpy(particleArray->getMomentums(2).data() + writeIndex,
-                        src.payload.data() + 5 * count, count * sizeof(pfc::FP));
+                        data + 5 * count, count * sizeof(pfc::FP));
 
             // Weight
             std::memcpy(particleArray->getWeights().data() + writeIndex,
-                        src.payload.data() + 6 * count, count * sizeof(pfc::FP));
+                        data + 6 * count, count * sizeof(pfc::FP));
 
             // Gamma
             std::memcpy(particleArray->getGammas().data() + writeIndex,
-                        src.payload.data() + 7 * count, count * sizeof(pfc::FP));
+                        data + 7 * count, count * sizeof(pfc::FP));
 
             writeIndex += count;
         }
