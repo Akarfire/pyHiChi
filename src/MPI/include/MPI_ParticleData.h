@@ -28,6 +28,12 @@ struct ParticleData
     // Total count of stored particles of all types
     int getCount() const { return <resolve based on header>; }
 
+    // Resizes payload to match the incoming number of particles
+    void resizePayload(int particle_count) 
+    {
+    
+    }
+
     // Per type data access
     int getTypeCount(int type) const { <resolve based on header>; }
     PayloadDataType* getTypePayload(int type) { return <pointer to payload section for this type>; } 
@@ -81,11 +87,22 @@ struct ParticleData_Uniform_SoA
 
     // Count of all stored particles
     int getCount() const { return header[0]; }
-    void setCount(int count, bool update_payload_size = true) 
+    void setCount(int count) 
     { 
         header[0] = count; 
-        payload.reserve(count * perParticleDataSize());
     }
+    // Resizes payload to match the incoming number of particles
+    void resizePayload(int particle_count) 
+    {
+        payload.resize(particle_count * perParticleDataSize());
+    }
+
+    // Resizes payload to match the incoming number of particles
+    void reservePayload(int particle_count) 
+    {
+        payload.reserve(particle_count * perParticleDataSize());
+    }
+
     // Type (for message validation only)
     int getType() const { return header[1]; }
     void setType(int type) { header[1] = type; }

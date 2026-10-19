@@ -109,8 +109,11 @@ public:
             if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
 
             // Filling out the header
-            outParticleData[dir].setCount(send_indices[dir].size(), true);
+            outParticleData[dir].setCount(send_indices[dir].size());
             outParticleData[dir].setType(particleArray->getType());
+
+            // Resizing payload
+            outParticleData[dir].reservePayload(send_indices[dir].size());
 
             // Package positions
             std::vector<int>& indices = send_indices[dir];
