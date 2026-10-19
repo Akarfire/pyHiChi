@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <random>
 
 #include "Constants.h"
 #include "FieldSolver.h"
@@ -26,7 +27,8 @@ using FP = pfc::FP;
 using FP3 = pfc::FP3;
 using Int3 = pfc::Int3;
 
-using ParticleT = pfc::Particle<pfc::Three>;
+using ParticleWriteType = pfc::Particle<pfc::Three>;
+using ParticleReadType = pfc::ParticleProxy<pfc::Three>;
 
 namespace pfc {
     namespace ParticleInfo {
@@ -156,24 +158,24 @@ void setupParticles()
         pfc::ParticleInfo::numTypes = sizeParticleTypes;
 }
 
-void debugPrintParticle(const ParticleT& p)
+void debugPrintParticle(ParticleReadType& p)
 {
     std::cout << "Particle : " << p.getPosition().toString() << " : " << p.getMomentum().toString() << " : " << 
         p.getWeight() << " : " << p.getGamma() << " : " << p.getType() << std::endl;
 }
 
-void debugPrintParticleArray(const std::vector<ParticleT>& array)
+void debugPrintParticleArray(pfc::ParticleArray3d& array)
 {
     std::cout << "Particle Array" << std::endl;
-    for (auto& p : array)
-        debugPrintParticle(p);
+    for (int i = 0; i < array.size(); i++)
+        debugPrintParticle(array[i]);
 
     std::cout << endl;
 }
 
 int main(int argc, char** argv)
 {
-    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA> particleExchanger;
+    srand(1);
 
     setupParticles();
 
@@ -185,67 +187,79 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
 
-    // Creating particle type
-    MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
+    // Topology
+    pfc::Int3 sections(3, 3, 1);
+    std::shared_ptr<mpi::Topology> topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::None, mpi_size);
+    int center_rank = 4;
 
-    // Test particle array
-    std::vector<ParticleT> test_particle_array;
-    size_t num_particles = 3;
-    test_particle_array.resize(num_particles); // Same size for all ranks
+    // Particle exchanger
+    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA> particleExchanger;
+
+    // Creating particle type & array
+    MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
+    pfc::ParticleArray3d particle_array;    
+
+    // Config
+    size_t num_particles = 10;
+    const pfc::FP3 lower_bound(0.25, 0.25, 0.25);
+    const pfc::FP3 upper_bound(0.75, 0.75, 0.75);
 
     // Fill with particles
-    for (size_t i = 0; i < num_particles; i++)
+    if (mpi_rank == center_rank)
+        for (size_t i = 0; i < num_particles; i++)
+        {
+            ParticleWriteType p;
+            p.setVelocity(pfc::FP3(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
+            p.setPosition(pfc::FP3( (float)(rand()) / RAND_MAX, 
+                                    (float)(rand()) / RAND_MAX, 
+                                    0.5));
+            p.setWeight((mpi_rank + 1) * 5);
+            particle_array.pushBack(p);
+        }
+
+    // Pre communicate print
+    for (int r = 0; r < mpi_size; r++)
     {
-        test_particle_array[i] = ParticleT();
-        test_particle_array[i].setVelocity(pfc::Vector3<FP>(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
-        test_particle_array[i].setPosition(10.0 * pfc::Vector3<FP>(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
-        test_particle_array[i].setWeight((mpi_rank + 1) * 5);
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (mpi_rank == r)
+        {
+            std::cout << "[RANK " << mpi_rank << "] ";
+            debugPrintParticleArray(particle_array);
+            std::cout.flush();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
+    // Communication
+    if (mpi_rank == center_rank)
+    {
+        std::cout << "\n\n\nCOMMUNICATION\n\n\n";
+        std::cout.flush();
+    }
+
+    mpi::ParticleData3D_Uniform_SoA send_data[27];
+    mpi::ParticleData3D_Uniform_SoA recv_data[27];
+
+    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology);
+
+    particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
+
+    mpi::ParticleStorageInterface3D_Uniform_SoA::insertParticles(&particle_array, recv_data, lower_bound, upper_bound, mpi_rank, topology);
 
     MPI_Barrier(MPI_COMM_WORLD);
-    if (mpi_rank == 0)
+
+    // Post communication print
+    for (int r = 0; r < mpi_size; r++)
     {
-        std::cout << "[RANK " << mpi_rank << "] ";
-        debugPrintParticleArray(test_particle_array);
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (mpi_rank == r)
+        {
+            std::cout << "[RANK " << mpi_rank << "] ";
+            debugPrintParticleArray(particle_array);
+            std::cout.flush();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (mpi_rank == 1)
-    {
-        std::cout << "[RANK " << mpi_rank << "] ";
-        debugPrintParticleArray(test_particle_array);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-
-
-    // Send / Recv array of particles
-    if (mpi_rank == 0)
-    {
-        MPI_Send(test_particle_array.data(), num_particles, particle_type, 1, 0, MPI_COMM_WORLD);
-    }
-    else if (mpi_rank == 1)
-    {
-        MPI_Status status;
-        MPI_Recv(test_particle_array.data(), num_particles, particle_type, 0, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-    }
-
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    if (mpi_rank == 0)
-    {
-        std::cout << "[RANK " << mpi_rank << "] ";
-        debugPrintParticleArray(test_particle_array);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-
-    if (mpi_rank == 1)
-    {
-        std::cout << "[RANK " << mpi_rank << "] ";
-        debugPrintParticleArray(test_particle_array);
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
-
 
     MPI_Finalize();
     return 0;
