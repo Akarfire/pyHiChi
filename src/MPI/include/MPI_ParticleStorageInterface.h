@@ -11,6 +11,7 @@
 #include "MPI_Utilities.h"
 #include "MPI_ParticleUtils.h"
 #include "MPI_ParticleData.h"
+#include "MPI_Topology.h"
 
 namespace mpi
 {
@@ -26,7 +27,7 @@ protected:
 
     // Returns the cube corner id corresponding to the neighboring rank, that a particle 
     // with the specified position shall be sent to
-    static int getResponsibleNeighborID(FP x, FP y, FP z, 
+    static pfc::Int3 getResponsibleNeighbor(FP x, FP y, FP z, 
                                         const pfc::FP3& lower_bound, 
                                         const pfc::FP3& upper_bound)
     {
@@ -49,7 +50,7 @@ protected:
         int iy = higher_y - lower_y;
         int iz = higher_z - lower_z;
 
-        return offsetToCubeCornerID(ix, iy, iz);
+        return pfc::Int3(ix, iy, iz);
     }
 
 // Implement in derived classes
@@ -77,7 +78,7 @@ public:
     static void collectParticles(   pfc::ParticleArray3d* particleArray, 
                                     ParticleData3D_Uniform_SoA outParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                                    int mpi_rank, std::shared_ptr<class Topology> topology)
+                                    int mpi_rank, std::shared_ptr<Topology> topology)
     {
         // Send indices for every direction
         // (0, 0, 0) offset is mapped to 13, so it will always be emtpy
@@ -91,8 +92,9 @@ public:
 
         for (int i = 0; i < particleArray->size(); i++)
         {
-            int neighbor_id = getResponsibleNeighborID(pos_x[i], pos_y[i], pos_z[i], lower_bound, upper_bound);
-            if (neighbor_id != NO_DIRECTION)
+            pfc::Int3 neighbor_offset = getResponsibleNeighbor(pos_x[i], pos_y[i], pos_z[i], lower_bound, upper_bound);
+            int neighbor_id = offsetToCubeCornerID(neighbor_offset);
+            if (neighbor_id != NO_DIRECTION && topology->getNeighbor(mpi_rank, neighbor_offset) != MPI_INVALID_RANK)
             {
                 send_indices[neighbor_id].push_back(i);
                 deletion_indices.push_back(i);
@@ -184,7 +186,7 @@ public:
     static void insertParticles(    pfc::ParticleArray3d* particleArray, 
                                     const ParticleData3D_Uniform_SoA inParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                                    int mpi_rank, std::shared_ptr<class Topology> topology)
+                                    int mpi_rank, std::shared_ptr<Topology> topology)
     {
         // Type check (since ParticleData3D_Uniform_SoA is single type)
         if (particleArray->getType() != inParticleData[0].getType())
