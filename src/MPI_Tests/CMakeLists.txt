@@ -17,6 +17,8 @@ add_executable(mpi_tests
     src/testMPI_FieldSolver.cpp
     src/testMPI_BoundaryConditions.cpp
 
+    src/testMPI_ParticleExchanger.cpp
+
     src/TestingUtility.cpp
 
     ${MPI_SOURCES}
