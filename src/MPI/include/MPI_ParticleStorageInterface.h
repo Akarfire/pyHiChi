@@ -181,16 +181,108 @@ public:
         {
             particleArray->deleteParticle(deletion_indices[i]);
         }
+
+        // Handling periodical conditions - Pre send
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue;
+
+            pfc::Int3 offset = cubeCornerIdToOffset(dir);
+            bool periodical = topology->isNeighborOverLoop(mpi_rank, offset);
+
+            if (!periodical) continue;
+
+            pfc::FP* data = outParticleData[dir].payload.data();
+            int particle_count = outParticleData[dir].getCount();
+
+            pfc::FP* dpos_x = data + 0 * particle_count;
+            pfc::FP* dpos_y = data + 1 * particle_count;
+            pfc::FP* dpos_z = data + 2 * particle_count;
+
+            // X
+            if (offset.x < 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_x[p] = lower_bound.x - dpos_x[p];
+
+            else if (offset.x > 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_x[p] = dpos_x[p] - upper_bound.x;
+
+            // Y
+            if (offset.y < 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_y[p] = lower_bound.y - dpos_y[p];
+
+            else if (offset.y > 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_y[p] = dpos_y[p] - upper_bound.y;
+
+            // Z
+            if (offset.z < 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_z[p] = lower_bound.z - dpos_z[p];
+
+            else if (offset.z > 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_z[p] = dpos_z[p] - upper_bound.z;
+        }
     }
 
     static void insertParticles(    pfc::ParticleArray3d* particleArray, 
-                                    const ParticleData3D_Uniform_SoA inParticleData[27],
+                                    ParticleData3D_Uniform_SoA inParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
                                     int mpi_rank, std::shared_ptr<Topology> topology)
     {
         // Type check (since ParticleData3D_Uniform_SoA is single type)
         if (particleArray->getType() != inParticleData[0].getType())
             throw std::runtime_error("MPI PARTICLE STORAGE INTEFACE : Attempted to insert particles with incorrect type!");
+
+
+        // Handling periodical conditions - Post send
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue;
+
+            pfc::Int3 offset = cubeCornerIdToOffset(dir);
+            bool periodical = topology->isNeighborOverLoop(mpi_rank, -1 * offset); // Offset is inversed
+
+            if (!periodical) continue;
+
+            pfc::FP* data = inParticleData[dir].payload.data();
+            int particle_count = inParticleData[dir].getCount();
+
+            pfc::FP* dpos_x = data + 0 * particle_count;
+            pfc::FP* dpos_y = data + 1 * particle_count;
+            pfc::FP* dpos_z = data + 2 * particle_count;
+
+            // X
+            if (offset.x < 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_x[p] = upper_bound.x - dpos_x[p];
+
+            else if (offset.x > 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_x[p] = dpos_x[p] + lower_bound.x;
+
+            // Y
+            if (offset.y < 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_y[p] = upper_bound.y - dpos_y[p];
+
+            else if (offset.y > 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_y[p] = dpos_y[p] + lower_bound.y;
+
+            // Z
+            if (offset.z < 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_z[p] = upper_bound.z - dpos_z[p];
+
+            else if (offset.z > 0)
+                for (int p = 0; p < particle_count; p++)
+                    dpos_z[p] = dpos_z[p] + lower_bound.z;
+        }
+
 
         // Cache initial write index before resizing the buffers
         int writeIndex = particleArray->size();
