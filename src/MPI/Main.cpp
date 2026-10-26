@@ -175,7 +175,7 @@ void debugPrintParticleArray(pfc::ParticleArray3d& array)
 
 int main(int argc, char** argv)
 {
-    srand(1);
+    srand(2);
 
     setupParticles();
 
@@ -212,7 +212,7 @@ int main(int argc, char** argv)
             p.setVelocity(pfc::FP3(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
             p.setPosition(pfc::FP3( (float)(rand()) / RAND_MAX, 
                                     (float)(rand()) / RAND_MAX, 
-                                    0.5));
+                                    (float)(rand()) / RAND_MAX));
             p.setWeight((mpi_rank + 1) * 5);
             particle_array.pushBack(p);
         }
@@ -240,7 +240,8 @@ int main(int argc, char** argv)
     mpi::ParticleData3D_Uniform_SoA send_data[27];
     mpi::ParticleData3D_Uniform_SoA recv_data[27];
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology);
+    int expected[27] = {};
+    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
 
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 

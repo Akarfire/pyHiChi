@@ -139,7 +139,8 @@ TEST(MPI_ParticleExchanger, Exhange_Non_Periodical_One_To_Many_3_3_3)
     mpi::ParticleData3D_Uniform_SoA send_data[27];
     mpi::ParticleData3D_Uniform_SoA recv_data[27];
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology);
+    int expected[27] = {};
+    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
 
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 
@@ -226,7 +227,8 @@ TEST(MPI_ParticleExchanger, Exhange_Non_Periodical_All_3_3_3)
     mpi::ParticleData3D_Uniform_SoA send_data[27];
     mpi::ParticleData3D_Uniform_SoA recv_data[27];
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology);
+    int expected[27] = {};
+    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
 
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 
@@ -311,7 +313,8 @@ TEST(MPI_ParticleExchanger, Exhange_Periodical_All_3_3_3)
     mpi::ParticleData3D_Uniform_SoA send_data[27];
     mpi::ParticleData3D_Uniform_SoA recv_data[27];
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology);
+    int expected[27] = {};
+    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
 
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 

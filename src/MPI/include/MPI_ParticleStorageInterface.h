@@ -59,7 +59,8 @@ public:
     static void collectParticles(   ParticleArrayType* particleArray, 
                                     ParticleDataType outParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                                    int mpi_rank, std::shared_ptr<class Topology> topology)
+                                    int mpi_rank, std::shared_ptr<class Topology> topology,
+                                    int expected_num_particles[27])
 
     static void insertParticles(    pfc::ParticleArray3d* particleArray, 
                                     const ParticleData3D_Uniform_SoA inParticleData[27],
@@ -74,36 +75,81 @@ public:
 // Version for a 3D uniform particle array with SoA data type
 class ParticleStorageInterface3D_Uniform_SoA : public ParticleStorageInterface
 {
+    // Swaps particle at particleArray[index] with the particle before the tail
+    // Returns the new index of the particle
+    static int swapParticle(pfc::ParticleArray3d* particleArray, int index, int tail)
+    {        
+        int size = particleArray->size();
+        int new_index = size - tail - 1;
+
+        if (new_index == index) return index;
+
+        for (int d = 0; d < particleArray->positionDimension; d++)
+        {
+            auto& positions = particleArray->getPositions(d);
+            std::swap(positions[index], positions[new_index]);
+        }
+        for (int d = 0; d < particleArray->momentumDimension; d++)
+        {
+            auto& momentums = particleArray->getMomentums(d);
+            std::swap(momentums[index], momentums[new_index]);
+        }
+
+        auto& weights = particleArray->getWeights();
+        std::swap(weights[index], weights[new_index]);
+        auto& gammas = particleArray->getGammas();
+        std::swap(gammas[index], gammas[new_index]);
+
+        return new_index;
+    }
+
 public:
     static void collectParticles(   pfc::ParticleArray3d* particleArray, 
                                     ParticleData3D_Uniform_SoA outParticleData[27],
                                     const pfc::FP3& lower_bound, const pfc::FP3& upper_bound,
-                                    int mpi_rank, std::shared_ptr<Topology> topology)
+                                    int mpi_rank, std::shared_ptr<Topology> topology,
+                                    int expected_num_particles[27])
     {
         // Send indices for every direction
         // (0, 0, 0) offset is mapped to 13, so it will always be emtpy
-        std::vector<int> send_indices[27]; // TO DO : Add a heuristic reservation mechanism
-        std::vector<int> deletion_indices;
+        std::vector<int> send_indices[27];
+        bool validDirection[27] = {};
+
+        for (int dir = 0; dir < 27; dir++)
+        {
+            if (dir == NO_DIRECTION) continue;
+            send_indices[dir].reserve(expected_num_particles[dir]);
+            validDirection[dir] = topology->getNeighbor(mpi_rank, cubeCornerIdToOffset(dir)) != MPI_INVALID_RANK;
+        }
+
+        int size = particleArray->size();
 
         // Loop over the ensemble and select the out-of-bound particles
         auto& pos_x = particleArray->getPositions(0);
         auto& pos_y = particleArray->getPositions(1);
         auto& pos_z = particleArray->getPositions(2);
 
-        for (int i = 0; i < particleArray->size(); i++)
+        int num_transfered = 0;
+        for (int i = 0; i < size - num_transfered; i++)
         {
             pfc::Int3 neighbor_offset = getResponsibleNeighbor(pos_x[i], pos_y[i], pos_z[i], lower_bound, upper_bound);
             int neighbor_id = offsetToCubeCornerID(neighbor_offset);
-            if (neighbor_id != NO_DIRECTION && topology->getNeighbor(mpi_rank, neighbor_offset) != MPI_INVALID_RANK)
+            if (neighbor_id != NO_DIRECTION && validDirection[neighbor_id])
             {
-                send_indices[neighbor_id].push_back(i);
-                deletion_indices.push_back(i);
+                int new_index = swapParticle(particleArray, i, num_transfered);
+                send_indices[neighbor_id].push_back(new_index);
+                num_transfered++;
+
+                i--;
             }
         }
 
         auto& momentums_x = particleArray->getMomentums(0);
         auto& momentums_y = particleArray->getMomentums(1);
         auto& momentums_z = particleArray->getMomentums(2);
+
+        auto& weights = particleArray->getWeights();
+        auto& gammas = particleArray->getGammas();
 
         // Packaging loop
         for (int dir = 0; dir < 27; dir++)
@@ -115,72 +161,41 @@ public:
             outParticleData[dir].setType(particleArray->getType());
 
             // Resizing payload
-            outParticleData[dir].reservePayload(send_indices[dir].size());
+            outParticleData[dir].resizePayload(send_indices[dir].size());
 
             // Package positions
+            std::vector<FP>& payload = outParticleData[dir].payload;
             std::vector<int>& indices = send_indices[dir];
-
-            // TEMPORARY, WILL BE REPLACED WITH COPYING THE END OF ARRAYS
-            // (Once the swapping functionality is implemented)
-
+            int n = static_cast<int>(indices.size());
+    
             // Positions
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(pos_x[index]);
-            }
-
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(pos_y[index]);
-            }
-
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(pos_z[index]);
-            }
+            for (int i = 0; i < n; i++) payload[n * 0 + i] = pos_x[indices[i]];
+            for (int i = 0; i < n; i++) payload[n * 1 + i] = pos_y[indices[i]];
+            for (int i = 0; i < n; i++) payload[n * 2 + i] = pos_z[indices[i]];
 
             // Momentums
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(momentums_x[index]);
-            }
-
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(momentums_y[index]);
-            }
-
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(momentums_z[index]);
-            }
+            for (int i = 0; i < n; i++) payload[n * 3 + i] = momentums_x[indices[i]];
+            for (int i = 0; i < n; i++) payload[n * 4 + i] = momentums_y[indices[i]];
+            for (int i = 0; i < n; i++) payload[n * 5 + i] = momentums_z[indices[i]];
             
             // Weights
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(particleArray->getWeights()[index]);
-            }
+            for (int i = 0; i < n; i++) payload[n * 6 + i] = weights[indices[i]];
 
             // Gammas
-            for (int i = 0; i < indices.size(); i++)
-            {
-                int index = indices[i];
-                outParticleData[dir].payload.push_back(particleArray->getGammas()[index]);
-            }
+            for (int i = 0; i < n; i++) payload[n * 7 + i] = gammas[indices[i]];
         }
 
-        // Deletion loop (ALSO TEMPORARY)
-        for (int i = static_cast<int>(deletion_indices.size()) - 1; i >= 0; i--)
-        {
-            particleArray->deleteParticle(deletion_indices[i]);
-        }
+        // Deletion
+        particleArray->getPositions(0).resize(size - num_transfered);
+        particleArray->getPositions(1).resize(size - num_transfered);
+        particleArray->getPositions(2).resize(size - num_transfered);
+
+        particleArray->getMomentums(0).resize(size - num_transfered);
+        particleArray->getMomentums(1).resize(size - num_transfered);
+        particleArray->getMomentums(2).resize(size - num_transfered);
+
+        particleArray->getWeights().resize(size - num_transfered);
+        particleArray->getGammas().resize(size - num_transfered);
 
         // Handling periodical conditions - Pre send
         for (int dir = 0; dir < 27; dir++)
