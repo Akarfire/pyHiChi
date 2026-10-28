@@ -45,7 +45,7 @@ namespace pfc
             std::shared_ptr<mpi::FieldExchanger> fieldExchanger,
             std::shared_ptr<mpi::Topology> topology, int mpi_rank) :
 
-            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex), 
+            FieldBoundaryCondition<GridType>(grid, leftBorderIndex, rightBorderIndex), 
             exchanger(fieldExchanger), topology(topology), rank(mpi_rank)
         {
             checkCommunicator();
@@ -66,17 +66,17 @@ namespace pfc
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::generateE(FP time)
     {
-        exchanger->performExchangeInDirection(grid->Ex.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(grid->Ey.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(grid->Ez.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Ex.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Ey.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Ez.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
     }
 
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::generateB(FP time)
     {
-        exchanger->performExchangeInDirection(grid->Bx.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(grid->By.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(grid->Bz.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Bx.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->By.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Bz.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
     }
 
     template <class GridType>
@@ -93,6 +93,6 @@ namespace pfc
         FieldBoundaryCondition<GridType>::load(istr);
 
         istr.read((char*)&direction_, sizeof(direction_));
-        mpiDirection = static_cast<mpi::Direction>((direction_ == SideEnum::RIGHT) ? static_cast<int>(axis) * 2 : static_cast<int>(axis) * 2 + 1);
+        mpiDirection = static_cast<mpi::Direction>((direction_ == SideEnum::RIGHT) ? static_cast<int>(this->axis) * 2 : static_cast<int>(this->axis) * 2 + 1);
     }
 }
