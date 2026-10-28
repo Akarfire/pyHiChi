@@ -32,7 +32,7 @@ namespace pfc
             std::shared_ptr<mpi::FieldExchanger> fieldExchanger,
             std::shared_ptr<mpi::Topology> topology, int mpi_rank) :
 
-            FieldBoundaryCondition(grid, leftBorderIndex, rightBorderIndex, axis), direction_(direction),
+            FieldBoundaryCondition<GridType>(grid, leftBorderIndex, rightBorderIndex, axis), direction_(direction),
             exchanger(fieldExchanger), topology(topology), rank(mpi_rank)
         { 
             mpiDirection = static_cast<mpi::Direction>((direction_ == SideEnum::RIGHT) ? static_cast<int>(axis) * 2 : static_cast<int>(axis) * 2 + 1);
