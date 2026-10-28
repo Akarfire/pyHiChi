@@ -82,7 +82,7 @@ namespace pfc
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::save(std::ostream& ostr)
     {
-        FieldBoundaryCondition<YeeGrid>::save(ostr);
+        FieldBoundaryCondition<GridType>::save(ostr);
 
         ostr.write((char*)&direction_, sizeof(direction_));
     }
@@ -90,7 +90,7 @@ namespace pfc
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::load(std::istream& istr)
     {
-        FieldBoundaryCondition<YeeGrid>::load(istr);
+        FieldBoundaryCondition<GridType>::load(istr);
 
         istr.read((char*)&direction_, sizeof(direction_));
         mpiDirection = static_cast<mpi::Direction>((direction_ == SideEnum::RIGHT) ? static_cast<int>(axis) * 2 : static_cast<int>(axis) * 2 + 1);
