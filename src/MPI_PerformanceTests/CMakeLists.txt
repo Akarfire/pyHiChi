@@ -10,6 +10,10 @@ include_directories(
 
 file(GLOB_RECURSE MPI_SOURCES "../MPI/src/*.cpp")
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
 add_executable(mpi_perf_tests
     src/testMPI_PerfFields.cpp
 
