@@ -2,6 +2,7 @@
 
 #include <mpi.h>
 #include <vector>
+#include <memory>
 
 #include "FP.h"
 #include "Vectors.h"

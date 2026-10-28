@@ -7,6 +7,7 @@
 #include "FieldSolver.h"
 
 #include <type_traits>
+#include <memory>
 
 namespace mpi
 {

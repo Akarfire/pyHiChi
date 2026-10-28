@@ -1,6 +1,8 @@
 #pragma once
 #include "Vectors.h"
+
 #include <vector>
+#include <memory>
 
 namespace mpi
 {

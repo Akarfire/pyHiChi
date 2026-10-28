@@ -4,6 +4,8 @@
 #include "MPI_FieldExchanger.h"
 #include "MPI_Topology.h"
 
+#include <memory>
+
 namespace pfc
 {
     template <class GridType>
