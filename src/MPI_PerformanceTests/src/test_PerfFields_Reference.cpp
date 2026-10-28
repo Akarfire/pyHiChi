@@ -12,8 +12,8 @@ class ReferencePerfTest
 {
     // CONFIGURATION
 
-    using FieldSolverType = typename FDTD;
-    using GridType = typename YeeGrid;
+    using FieldSolverType = FDTD;
+    using GridType = YeeGrid;
 
     const int dimension = 3;
     const CoordinateEnum axis = CoordinateEnum::x;
