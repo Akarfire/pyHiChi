@@ -6,6 +6,8 @@
 #include "Fdtd.h"
 #include "HiChi_MPI.h"
 
+#include "MpiPerfTestUtilities.h"
+
 #define VERIFY
 
 using namespace pfc;
@@ -19,9 +21,6 @@ class PerfTest
 
     const int dimension = 3;
     const CoordinateEnum axis = CoordinateEnum::x;
-
-    const int gridSizeLongitudinal = 128;
-    const int gridSizeTransverse = 128;
 
     std::unique_ptr<FieldSolverType> fieldSolver;
     std::unique_ptr<GridType> grid;
@@ -85,7 +84,7 @@ class PerfTest
 
 public:
     // Constructor / Runner
-    PerfTest(const Int3& sections)
+    PerfTest(const Int3& sections, const int gridSizeLongitudinal, const int gridSizeTransverse, std::ofstream& logStream)
     {
         auto total_start = std::chrono::high_resolution_clock::now();
 
@@ -99,7 +98,7 @@ public:
         int topologySize = sections.x * sections.y * sections.z;
         if (topologySize > mpi_size)
         {
-            std::cout << "Not enough processes for the test: " << mpi_size << "/" << topologySize << std::endl;
+            logStream << "Not enough processes for the test: " << mpi_size << "/" << topologySize << std::endl;
             return;
         }
 
@@ -166,7 +165,7 @@ public:
         auto setup_end = std::chrono::high_resolution_clock::now();
         auto setup_duration = std::chrono::duration<double, std::milli>(setup_end - setup_start);
         if (mpi_rank == 0)
-            std::cout << " Setup Time: " << setup_duration.count() << " ms" << std::endl;
+            logStream << " Setup Time: " << setup_duration.count() << " ms" << std::endl;
 
         // Grid initialization
         auto grid_start = std::chrono::high_resolution_clock::now();
@@ -176,7 +175,7 @@ public:
         auto grid_end = std::chrono::high_resolution_clock::now();
         auto grid_duration = std::chrono::duration<double, std::milli>(grid_end - grid_start);
         if (mpi_rank == 0)
-            std::cout << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
+            logStream << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
 
         // Running
         auto run_start = std::chrono::high_resolution_clock::now();
@@ -189,7 +188,7 @@ public:
         auto run_end = std::chrono::high_resolution_clock::now();
         auto run_duration = std::chrono::duration<double, std::milli>(run_end - run_start);
         if (mpi_rank == 0)
-            std::cout << " Run Time: " << run_duration.count() << " ms" << std::endl;
+            logStream << " Run Time: " << run_duration.count() << " ms" << std::endl;
 
         // Verification
         #ifdef VERIFY
@@ -244,7 +243,7 @@ public:
                         }
                     }
 
-            std::cout << "RANK " << mpi_rank << " Verification Result: " << verified << std::endl;
+            logStream << "RANK " << mpi_rank << " Verification Result: " << verified << std::endl;
         #endif
 
         auto total_end = std::chrono::high_resolution_clock::now();
@@ -253,7 +252,7 @@ public:
         MPI_Barrier(topology->getTopologyCommunicator());
 
         if (mpi_rank == 0)
-            std::cout << "Total Time: " << total_duration.count() << " ms" << std::endl;
+            logStream << "Total Time: " << total_duration.count() << " ms" << std::endl;
     }
 };
 
@@ -266,21 +265,51 @@ int main(int argc, char** argv)
 
     int mpi_size;
     MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
- 
-    //Int3 sections = Int3(1, 1, 1);
 
-    // Line over X topology
-    //sections = Int3(mpi_size, 1, 1);
+    int mpi_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 
-    // Volume fill topology
-    int dims[3] = {0, 0, 0};
-    MPI_Dims_create(mpi_size, 3, dims);
-    Int3 sections = Int3(dims[0], dims[1], dims[2]);
+    ProgramOptions opts;
+    if (!ProgramOptions::parse(argc, argv, opts))
+    {
+        if (mpi_rank == 0)
+            ProgramOptions::printUsage(argv[0]);
+        MPI_Finalize();
+        return 1;
+    }
 
-    // Running the test
-    PerfTest perfTest(sections);
+    int gridSizeLongitudinal = opts.gridSizeLongitudinal;
+    int gridSizeTransverse   = opts.gridSizeTransverse;
+
+    Int3 sections;
+    if (opts.splitMode == ProgramOptions::SplitMode::Line)
+    {
+        // Line over X topology
+        sections = Int3(mpi_size, 1, 1);
+    }
+    else if (opts.splitMode == ProgramOptions::SplitMode::Uniform)
+    {
+        // Volume fill topology
+        int dims[3] = {0, 0, 0};
+        MPI_Dims_create(mpi_size, 3, dims);
+        sections = Int3(dims[0], dims[1], dims[2]);
+    }
+
+    std::ofstream logStream = openPerfLog(opts, sections, mpi_rank);
+
+    if (mpi_rank == 0)
+    {
+        logStream << "Configuration:\n"
+                  << "  grid-longitudinal = " << gridSizeLongitudinal << "\n"
+                  << "  grid-transverse   = " << gridSizeTransverse   << "\n"
+                  << "  mpi_size          = " << mpi_size             << "\n"
+                  << "  sections          = (" << sections.x << ", "
+                                                 << sections.y << ", "
+                                                 << sections.z << ")\n";
+    }
+
+    PerfTest perfTest(sections, gridSizeLongitudinal, gridSizeTransverse, logStream);
 
     MPI_Finalize();
-
     return 0;
 }
