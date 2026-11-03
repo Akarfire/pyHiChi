@@ -2,6 +2,7 @@
 #include <chrono>
 #include <memory>
 
+#include "MpiPerfTestUtilities.h"
 #include "Fdtd.h"
 
 #define VERIFY
@@ -17,9 +18,6 @@ class ReferencePerfTest
 
     const int dimension = 3;
     const CoordinateEnum axis = CoordinateEnum::x;
-
-    const int gridSizeLongitudinal = 128;
-    const int gridSizeTransverse = 128;
 
     std::unique_ptr<FieldSolverType> fieldSolver;
     std::unique_ptr<GridType> grid;
@@ -80,7 +78,7 @@ class ReferencePerfTest
 
 public:
     // Constructor / Runner
-    ReferencePerfTest()
+    ReferencePerfTest(const int gridSizeLongitudinal, const int gridSizeTransverse, std::ofstream& logStream)
     {
         auto total_start = std::chrono::high_resolution_clock::now();
 
@@ -113,7 +111,7 @@ public:
         
         auto setup_end = std::chrono::high_resolution_clock::now();
         auto setup_duration = std::chrono::duration<double, std::milli>(setup_end - setup_start);
-        std::cout << " Setup Time: " << setup_duration.count() << " ms" << std::endl;
+        logStream << " Setup Time: " << setup_duration.count() << " ms" << std::endl;
 
         // Grid initialization
         auto grid_start = std::chrono::high_resolution_clock::now();
@@ -122,7 +120,7 @@ public:
 
         auto grid_end = std::chrono::high_resolution_clock::now();
         auto grid_duration = std::chrono::duration<double, std::milli>(grid_end - grid_start);
-        std::cout << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
+        logStream << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
 
         // Running
         auto run_start = std::chrono::high_resolution_clock::now();
@@ -134,7 +132,7 @@ public:
 
         auto run_end = std::chrono::high_resolution_clock::now();
         auto run_duration = std::chrono::duration<double, std::milli>(run_end - run_start);
-        std::cout << " Run Time: " << run_duration.count() << " ms" << std::endl;
+        logStream << " Run Time: " << run_duration.count() << " ms" << std::endl;
 
         // Verification
         #ifdef VERIFY
@@ -189,21 +187,36 @@ public:
                         }
                     }
 
-            std::cout << " Verification Result: " << verified << std::endl;
+            logStream << " Verification Result: " << verified << std::endl;
         #endif
 
         auto total_end = std::chrono::high_resolution_clock::now();
         auto total_duration = std::chrono::duration<double, std::milli>(total_end - total_start);
         
-        std::cout << "Total Time: " << total_duration.count() << " ms" << std::endl;
+        logStream << "Total Time: " << total_duration.count() << " ms" << std::endl;
     }
 };
 
 
 int main(int argc, char** argv)
 {
-    // Running the test
-    ReferencePerfTest referencePerfTest;
+    ProgramOptions opts;
+    if (!ProgramOptions::parse(argc, argv, opts))
+    {
+        ProgramOptions::printUsage(argv[0]);
+        return 1;
+    }
+
+    pfc::Int3 sections(1, 1, 1);
+    std::ofstream logStream = openPerfLog(opts, sections, 0, true);
+
+    logStream << "grid-longitudinal = " << opts.gridSizeLongitudinal << "\n"
+        << "grid-transverse   = " << opts.gridSizeTransverse   << "\n"
+        << "sections          = (1, 1, 1)\n";
+
+    ReferencePerfTest baseline(opts.gridSizeLongitudinal,
+                               opts.gridSizeTransverse,
+                               logStream);
 
     return 0;
 }

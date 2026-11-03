@@ -95,9 +95,11 @@ private:
 // Opens "perf_log_L<long>_T<trans>_<mode>_sec<sx>x<sy>x<sz>_rank<r>.log"
 inline std::ofstream openPerfLog(const ProgramOptions& opts,
                                  const pfc::Int3& sections,
-                                 int mpiRank)
+                                 int mpiRank, bool baseline = false)
 {
     std::ostringstream name;
+    if (baseline)
+        name << "BASELINE_";
     name << "perf_log"
          << "_L" << opts.gridSizeLongitudinal
          << "_T" << opts.gridSizeTransverse
