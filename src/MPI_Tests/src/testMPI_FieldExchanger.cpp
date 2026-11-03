@@ -189,7 +189,7 @@ void testExchange(
     MPI_Barrier(topology->getTopologyCommunicator());
 
     // Check
-    for (int r = 0; r < real_size; r++)
+    for (int r = 0; r < size; r++)
     {
         for (int dir = 0; dir < 6; dir++)
         {
