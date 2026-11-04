@@ -7,6 +7,7 @@
 #SBATCH -N 1
 #SBATCH -n 1
 
+source /etc/profile.d/modules.sh
 module load gcc-9.5.0
 module load mpi/2021.8.0
 

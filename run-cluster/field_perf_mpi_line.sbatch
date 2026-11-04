@@ -4,6 +4,7 @@
 #SBATCH -o logs/perf_%j.out
 #SBATCH -e logs/perf_%j.err
 
+source /etc/profile.d/modules.sh
 module load gcc-9.5.0
 module load mpi/2021.8.0
 
