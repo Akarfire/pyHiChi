@@ -57,23 +57,23 @@ void FieldExchanger::performExchangeInDirection(pfc::FP* data, Direction directi
     int send_neighbor = topology->getNeighbor(rank, direction);
     int recv_neighbor = topology->getNeighbor(rank, invertDirection(direction));
 
-    MPI_Request request;
-    MPI_Status status;
+    MPI_Request requests[2];
+    int num_requests = 0;
 
     // Sending
     if (send_neighbor != MPI_INVALID_RANK)
-        MPI_Isend(data, 1, sendTypes[static_cast<int>(direction)], send_neighbor, tag, communicator, &request);
+        MPI_Isend(data, 1, sendTypes[static_cast<int>(direction)], send_neighbor, tag, communicator, &requests[num_requests++]);
     
     // Receiving
     if (recv_neighbor != MPI_INVALID_RANK)
-        MPI_Recv(data, 1, recvTypes[static_cast<int>(direction)], recv_neighbor, tag, communicator, &status);
+        MPI_Irecv(data, 1, recvTypes[static_cast<int>(direction)], recv_neighbor, tag, communicator, &requests[num_requests++]);
 
     // Waiting for send operation to complete
-    if (send_neighbor != MPI_INVALID_RANK)
-        MPI_Wait(&request, &status);
+    if (num_requests > 0)
+        MPI_Waitall(num_requests, requests, MPI_STATUS_IGNORE);
 
     // Sync nodes
-    MPI_Barrier(communicator);
+    //MPI_Barrier(communicator);
 }
 
 // Performs echange sequence iteration for node "rank" in the specified topology
