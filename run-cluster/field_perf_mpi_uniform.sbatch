@@ -4,6 +4,4 @@
 #SBATCH -o logs/perf_%j.out
 #SBATCH -e logs/perf_%j.err 
 
-module load impi
-
 srun --cpu_bind=cores ../build/unix_makefiles/src/MPI_PerformanceTests/mpi_perf_tests --grid-longitudinal 128 --grid-transverse 128 --split-mode uniform

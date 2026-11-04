@@ -7,7 +7,5 @@
 #SBATCH -N 1
 #SBATCH -n 1
 
-module load impi
-
 srun --cpu_bind=cores ../build/unix_makefiles/src/MPI_PerformanceTests/reference_perf_test --grid-longitudinal 1024 --grid-transverse 64
 srun --cpu_bind=cores ../build/unix_makefiles/src/MPI_PerformanceTests/reference_perf_test --grid-longitudinal 128 --grid-transverse 128
