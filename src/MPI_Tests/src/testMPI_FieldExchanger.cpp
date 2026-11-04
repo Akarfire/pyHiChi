@@ -185,7 +185,7 @@ void testExchange(
     mpi::FieldExchanger exchanger(grid->numCells, numExternalCells);
 
     MPI_Barrier(topology->getTopologyCommunicator());
-    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, topology->getTopologyCommunicator());
+    exchanger.performExchangeSequence(grid->Ex.getData(), topology, rank, topology->getTopologyCommunicator(), 0);
     MPI_Barrier(topology->getTopologyCommunicator());
 
     // Check

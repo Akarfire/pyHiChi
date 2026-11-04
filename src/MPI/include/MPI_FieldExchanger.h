@@ -35,12 +35,12 @@ public:
     // Performs echange sequence iteration for node "rank" in the specified topology
     // BLOCKING
     // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-    void performExchangeInDirection(pfc::FP* data, Direction direction, std::shared_ptr<class Topology> topology, int rank, MPI_Comm communicator);
+    void performExchangeInDirection(pfc::FP* data, Direction direction, std::shared_ptr<class Topology> topology, int rank, MPI_Comm communicator, int tag);
 
 
     // Performs echange sequence iteration over every axis for node "rank" in the specified topology
     // BLOCKING
     // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-    void performExchangeSequence(pfc::FP* data, std::shared_ptr<class Topology> topology, int rank, MPI_Comm communicator);
+    void performExchangeSequence(pfc::FP* data, std::shared_ptr<class Topology> topology, int rank, MPI_Comm communicator, int tag);
 };
 }

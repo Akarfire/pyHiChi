@@ -51,25 +51,22 @@ FieldExchanger::~FieldExchanger()
 // Performs echange sequence iteration for node "rank" in the specified topology
 // BLOCKING
 // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY!
-void FieldExchanger::performExchangeInDirection(pfc::FP* data, Direction direction, std::shared_ptr<Topology> topology, int rank, MPI_Comm communicator)
+void FieldExchanger::performExchangeInDirection(pfc::FP* data, Direction direction, std::shared_ptr<Topology> topology, int rank, MPI_Comm communicator, int tag)
 {
     // Neighbors
     int send_neighbor = topology->getNeighbor(rank, direction);
     int recv_neighbor = topology->getNeighbor(rank, invertDirection(direction));
-
-    // Sync nodes
-    MPI_Barrier(communicator);
 
     MPI_Request request;
     MPI_Status status;
 
     // Sending
     if (send_neighbor != MPI_INVALID_RANK)
-        MPI_Isend(data, 1, sendTypes[static_cast<int>(direction)], send_neighbor, 0, communicator, &request);
+        MPI_Isend(data, 1, sendTypes[static_cast<int>(direction)], send_neighbor, tag, communicator, &request);
     
     // Receiving
     if (recv_neighbor != MPI_INVALID_RANK)
-        MPI_Recv(data, 1, recvTypes[static_cast<int>(direction)], recv_neighbor, 0, communicator, &status);
+        MPI_Recv(data, 1, recvTypes[static_cast<int>(direction)], recv_neighbor, tag, communicator, &status);
 
     // Waiting for send operation to complete
     if (send_neighbor != MPI_INVALID_RANK)
@@ -81,14 +78,14 @@ void FieldExchanger::performExchangeInDirection(pfc::FP* data, Direction directi
 
 // Performs echange sequence iteration for node "rank" in the specified topology
 // MUST BE CALLED BY EVERY PROCESS IN THE TOPOLOGY AT THE SAME TIME!
-void FieldExchanger::performExchangeSequence(pfc::FP* data, std::shared_ptr<Topology> topology, int rank, MPI_Comm communicator)
+void FieldExchanger::performExchangeSequence(pfc::FP* data, std::shared_ptr<Topology> topology, int rank, MPI_Comm communicator, int tag)
 {
-    performExchangeInDirection(data, Direction::pX, topology, rank, communicator);
-    performExchangeInDirection(data, Direction::nX, topology, rank, communicator);
-    performExchangeInDirection(data, Direction::pY, topology, rank, communicator);
-    performExchangeInDirection(data, Direction::nY, topology, rank, communicator);
-    performExchangeInDirection(data, Direction::pZ, topology, rank, communicator);
-    performExchangeInDirection(data, Direction::nZ, topology, rank, communicator);
+    performExchangeInDirection(data, Direction::pX, topology, rank, communicator, tag);
+    performExchangeInDirection(data, Direction::nX, topology, rank, communicator, tag);
+    performExchangeInDirection(data, Direction::pY, topology, rank, communicator, tag);
+    performExchangeInDirection(data, Direction::nY, topology, rank, communicator, tag);
+    performExchangeInDirection(data, Direction::pZ, topology, rank, communicator, tag);
+    performExchangeInDirection(data, Direction::nZ, topology, rank, communicator, tag);
 }
 
 }

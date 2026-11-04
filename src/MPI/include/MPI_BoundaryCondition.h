@@ -66,17 +66,19 @@ namespace pfc
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::generateE(FP time)
     {
-        exchanger->performExchangeInDirection(this->grid->Ex.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(this->grid->Ey.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(this->grid->Ez.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Ex.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator(), 0);
+        exchanger->performExchangeInDirection(this->grid->Ey.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator(), 1);
+        exchanger->performExchangeInDirection(this->grid->Ez.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator(), 2);
+        MPI_Barrier(topology->getTopologyCommunicator());
     }
 
     template <class GridType>
     inline void MPI_FieldBoundaryCondition<GridType>::generateB(FP time)
     {
-        exchanger->performExchangeInDirection(this->grid->Bx.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(this->grid->By.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
-        exchanger->performExchangeInDirection(this->grid->Bz.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator());
+        exchanger->performExchangeInDirection(this->grid->Bx.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator(), 0);
+        exchanger->performExchangeInDirection(this->grid->By.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator(), 1);
+        exchanger->performExchangeInDirection(this->grid->Bz.getData(), mpiDirection, topology, rank, topology->getTopologyCommunicator(), 2);
+        MPI_Barrier(topology->getTopologyCommunicator());
     }
 
     template <class GridType>
