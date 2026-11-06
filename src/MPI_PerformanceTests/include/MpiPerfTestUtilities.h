@@ -98,6 +98,8 @@ inline std::ofstream openPerfLog(const ProgramOptions& opts,
                                  int mpiRank, bool baseline = false)
 {
     std::ostringstream name;
+    if (mpiRank != 0)
+        name << "./verification/";
     if (baseline)
         name << "BASELINE_";
     name << "perf_log"
