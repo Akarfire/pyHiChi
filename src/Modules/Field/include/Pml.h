@@ -14,6 +14,10 @@ namespace pfc {
         Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
+        // Constructor for subgrids' pml
+        Pml(TGrid* grid, FP dt, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd,
+            Int3 sizePML, Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex, FP nPmlParam, FP r0PmlParam);
+
         // constructor for loading
         explicit Pml(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
 
@@ -97,6 +101,29 @@ namespace pfc {
     }
 
     template<class TGrid>
+    inline Pml<TGrid>::Pml(TGrid* grid, FP dt,
+        Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd,
+        Int3 sizePML, Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex, FP nPmlParam, FP r0PmlParam) :
+        grid(grid), dt(dt), sizePML(sizePML),
+        domainIndexBegin(globalDomainIndexBegin), domainIndexEnd(globalDomainIndexEnd)
+    {
+        checkGridAndPmlSize(this->grid->globalGridDims);
+
+        // TODO: consider global and local domain borders
+        this->leftPmlBorder = this->sizePML + this->domainIndexBegin;
+        this->rightPmlBorder = this->domainIndexEnd - this->sizePML;
+        this->leftGlobalBorderCoord = this->grid->origin + (FP3)this->domainIndexBegin * this->grid->steps;
+        this->rightGlobalBorderCoord = this->grid->origin + (FP3)this->domainIndexEnd * this->grid->steps;
+        this->leftPmlBorderCoord = this->leftGlobalBorderCoord + this->grid->steps * (FP3)this->sizePML;
+        this->rightPmlBorderCoord = this->rightGlobalBorderCoord - this->grid->steps * (FP3)this->sizePML;
+
+        this->splitGrid.reset(new PmlSplitGrid(this->leftPmlBorder, this->rightPmlBorder,
+            globalDomainIndexBegin, globalDomainIndexEnd,
+            localIndexOffset, localMinIndex, localMaxIndex));
+        initializePmlParams(nPmlParam, r0PmlParam, this->grid->steps);
+    }
+
+    template<class TGrid>
     inline FP Pml<TGrid>::computeSigma(FP coord, CoordinateEnum axis) const
     {
         int d = (int)axis;
@@ -154,6 +181,9 @@ namespace pfc {
         PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd,
             Int3 sizePML, FP nPmlParam, FP r0PmlParam);
 
+        PmlReal(TGrid* grid, FP dt, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd,
+            Int3 sizePML, Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex, FP nPmlParam, FP r0PmlParam);
+
         // constructor for loading
         explicit PmlReal(TGrid* grid, FP dt, Int3 domainIndexBegin, Int3 domainIndexEnd);
 
@@ -164,6 +194,13 @@ namespace pfc {
         Int3 sizePML, FP nPmlParam, FP r0PmlParam) :
         Pml<TGrid>(grid, dt, domainIndexBegin, domainIndexEnd,
             sizePML, nPmlParam, r0PmlParam)
+    {}
+
+    template<class TGrid>
+    inline PmlReal<TGrid>::PmlReal(TGrid* grid, FP dt, Int3 globalDomainIndexBegin, Int3 globalDomainIndexEnd,
+        Int3 sizePML, Int3 localIndexOffset, Int3 localMinIndex, Int3 localMaxIndex, FP nPmlParam, FP r0PmlParam) :
+        Pml<TGrid>(grid, dt, globalDomainIndexBegin, globalDomainIndexEnd,
+            sizePML, localIndexOffset, localMinIndex, localMaxIndex, nPmlParam, r0PmlParam)
     {}
 
     template<class TGrid>
