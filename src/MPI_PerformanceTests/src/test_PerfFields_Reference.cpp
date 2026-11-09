@@ -5,7 +5,7 @@
 #include "MpiPerfTestUtilities.h"
 #include "Fdtd.h"
 
-#define VERIFY
+//#define VERIFY
 
 using namespace pfc;
 

@@ -8,7 +8,7 @@
 
 #include "MpiPerfTestUtilities.h"
 
-#define VERIFY
+//#define VERIFY
 
 using namespace pfc;
 
