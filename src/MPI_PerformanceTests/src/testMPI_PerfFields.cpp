@@ -261,13 +261,6 @@ public:
 
 int main(int argc, char** argv)
 {
-    #ifdef _OPENMP
-        if (mpi_rank == 0) {
-            printf("OMP_NUM_THREADS env = %s\n", getenv("OMP_NUM_THREADS") ? getenv("OMP_NUM_THREADS") : "(unset)");
-            printf("omp_get_max_threads = %d\n", omp_get_max_threads());
-        }
-    #endif
-
     MPI_Init(&argc, &argv);
 
     int mpi_size;
@@ -275,6 +268,13 @@ int main(int argc, char** argv)
 
     int mpi_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
+    #ifdef _OPENMP
+        if (mpi_rank == 0) {
+            printf("OMP_NUM_THREADS env = %s\n", getenv("OMP_NUM_THREADS") ? getenv("OMP_NUM_THREADS") : "(unset)");
+            printf("omp_get_max_threads = %d\n", omp_get_max_threads());
+        }
+    #endif
 
     ProgramOptions opts;
     if (!ProgramOptions::parse(argc, argv, opts))
