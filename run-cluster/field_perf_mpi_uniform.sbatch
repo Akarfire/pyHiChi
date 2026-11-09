@@ -3,6 +3,7 @@
 #SBATCH -t 00:10:00
 #SBATCH -o logs/perf_%j.out
 #SBATCH -e logs/perf_%j.err 
+#SBATCH --cpus-per-task=4
 
 export OMP_NUM_THREADS=4
 export I_MPI_PMI_LIBRARY=/usr/lib64/libpmi.so
