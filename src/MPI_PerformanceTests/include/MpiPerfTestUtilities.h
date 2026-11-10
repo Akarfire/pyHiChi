@@ -20,6 +20,8 @@ struct ProgramOptions
     enum class SplitMode { Uniform, Line };
     SplitMode splitMode = SplitMode::Uniform;
 
+    std::string logFile;
+
     static void printUsage(const char* progName)
     {
         std::cout <<
@@ -28,6 +30,7 @@ struct ProgramOptions
             "  --grid-longitudinal N   Grid size along x-axis (longitudinal) [default: 32]\n"
             "  --grid-transverse   N   Grid size along y,z axes (transverse)    [default: 32]\n"
             "  --split-mode MODE       Section split mode: 'uniform' or 'x'     [default: uniform]\n"
+            "  --log-file NAME         Full path to output log file (overrides auto name)\n"
             "  --help, -h              Show this help message\n";
     }
 
@@ -64,6 +67,10 @@ struct ProgramOptions
                     return false;
                 }
             }
+            else if (arg == "--log-file" && i + 1 < argc)
+            {
+                opts.logFile = argv[++i];
+            }
             else
             {
                 if (mpi_rank_is_zero_safe())
@@ -98,16 +105,26 @@ inline std::ofstream openPerfLog(const ProgramOptions& opts,
                                  int mpiRank, bool baseline = false)
 {
     std::ostringstream name;
-    if (mpiRank != 0)
-        name << "./verification/";
-    if (baseline)
-        name << "BASELINE_";
-    name << "perf_log"
-         << "_L" << opts.gridSizeLongitudinal
-         << "_T" << opts.gridSizeTransverse
-         << "_"  << (opts.splitMode == ProgramOptions::SplitMode::Line ? "line" : "uniform")
-         << "_sec" << sections.x << "x" << sections.y << "x" << sections.z
-         << "_rank" << mpiRank
-         << ".log";
+
+    if (!opts.logFile.empty())
+    {
+        name << opts.logFile;
+        if (mpiRank != 0)
+            name << ".rank" + std::to_string(mpiRank);
+    }
+    else
+    {
+        if (mpiRank != 0)
+            name << "./verification/";
+        if (baseline)
+            name << "BASELINE_";
+        name << "perf_log"
+            << "_L" << opts.gridSizeLongitudinal
+            << "_T" << opts.gridSizeTransverse
+            << "_"  << (opts.splitMode == ProgramOptions::SplitMode::Line ? "line" : "uniform")
+            << "_sec" << sections.x << "x" << sections.y << "x" << sections.z
+            << "_rank" << mpiRank
+            << ".log";
+    }
     return std::ofstream(name.str());
 }
