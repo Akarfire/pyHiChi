@@ -24,7 +24,7 @@ srun --ntasks=$proc_num \
      --cpus-per-task=$thread_num \
      --cpu_bind=cores \
      numactl --localalloc \
-     ../build/unix_makefiles/src/MPI_PerformanceTests/mpi_perf_tests \
+     ../../build/unix_makefiles/src/MPI_PerformanceTests/mpi_perf_tests \
      --grid-longitudinal 512 \
      --grid-transverse 512 \
      --split-mode uniform \
