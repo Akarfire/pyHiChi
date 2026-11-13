@@ -31,12 +31,14 @@ struct ParticleData
     // Resizes payload to match the incoming number of particles
     void resizePayload(int particle_count) 
     {
-    
+        payload.res(particle_count * <Per particle data size>);
     }
 
-    // Per type data access
-    int getTypeCount(int type) const { <resolve based on header>; }
-    PayloadDataType* getTypePayload(int type) { return <pointer to payload section for this type>; } 
+    // Resizes payload to match the incoming number of particles
+    void reservePayload(int particle_count) 
+    {
+        payload.reserve(particle_count * <Per particle data size>);
+    }
 
     // MPI Communication data
     static const MPI_Datatype headerMpiDataType = MPI_INT;
@@ -106,10 +108,6 @@ struct ParticleData_Uniform_SoA
     // Type (for message validation only)
     int getType() const { return header[1]; }
     void setType(int type) { header[1] = type; }
-
-    // Per type data access (any type in this case)
-    int getTypeCount(int type) const { return header[0]; }
-    const pfc::FP* getTypePayload(int type) const { return payload.data(); } 
 
     // MPI Communication data
     static const MPI_Datatype headerMpiDataType = MPI_INT;

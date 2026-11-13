@@ -307,7 +307,7 @@ public:
         for (int dir = 0; dir < 27; dir++)
         {
             if (dir == NO_DIRECTION) continue; // Skipping the (0, 0, 0) offset (it is not used)
-            totalCount += inParticleData[dir].getTypeCount(particleArray->getType());
+            totalCount += inParticleData[dir].getCount();
         }
 
         int reserveSize = totalCount + particleArray->size();
@@ -329,8 +329,8 @@ public:
             if (dir == NO_DIRECTION) continue;
 
             const ParticleData3D_Uniform_SoA &src = inParticleData[dir];
-            int count = src.getTypeCount(particleArray->getType());
-            const pfc::FP *data = src.getTypePayload(particleArray->getType());
+            int count = src.getCount();
+            const pfc::FP *data = src.payload.data();
 
             if (count == 0) continue;
 
