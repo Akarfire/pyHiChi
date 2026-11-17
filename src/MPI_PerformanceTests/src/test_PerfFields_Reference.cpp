@@ -5,6 +5,10 @@
 #include "MpiPerfTestUtilities.h"
 #include "Fdtd.h"
 
+#ifdef __USE_OMP__
+    #include <omp.h>
+#endif
+
 //#define VERIFY
 
 using namespace pfc;
@@ -122,6 +126,8 @@ public:
         auto grid_duration = std::chrono::duration<double, std::milli>(grid_end - grid_start);
         logStream << " Grid Initialization Time: " << grid_duration.count() << " ms" << std::endl;
 
+        logStream << " True Grid Size: " << grid->numCells << std::endl;
+
         // Running
         auto run_start = std::chrono::high_resolution_clock::now();
 
@@ -209,6 +215,17 @@ int main(int argc, char** argv)
 
     pfc::Int3 sections(1, 1, 1);
     std::ofstream logStream = openPerfLog(opts, sections, 0, true);
+
+    #ifdef __USE_OMP__
+        const char* env = getenv("OMP_NUM_THREADS");
+        logStream << "=== OpenMP environment ===\n"
+                << "  OMP_NUM_THREADS (env)   = " << (env ? env : "(unset)") << "\n"
+                << "  omp_get_max_threads()   = " << omp_get_max_threads() << "\n"
+                << "  omp_get_num_procs()     = " << omp_get_num_procs() << "\n"
+                << "  omp_get_dynamic()       = " << omp_get_dynamic() << "\n"
+                << "  omp_get_nested()        = " << omp_get_nested() << "\n"
+                << "==========================\n";
+    #endif
 
     logStream << "grid-longitudinal = " << opts.gridSizeLongitudinal << "\n"
         << "grid-transverse   = " << opts.gridSizeTransverse   << "\n"
