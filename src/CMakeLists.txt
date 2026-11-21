@@ -7,8 +7,12 @@ add_subdirectory(pyHiChi)
 
 if (USE_TESTS)
    add_subdirectory(UnitTests)
+   add_subdirectory(MPI_Tests)
 endif()
 
 if (USE_PTESTS)
    add_subdirectory(PerformanceTests)
+   add_subdirectory(MPI_PerformanceTests)
 endif()
+
+add_subdirectory(MPI)
