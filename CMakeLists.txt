@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 3.1)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 option(USE_MKL OFF)
 option(USE_FFTW OFF)
 option(USE_OMP ON)
 
 project(hiChi)
+
+find_package(MPI REQUIRED)
 
 if (USE_OMP)
 	add_definitions(-D__USE_OMP__)
