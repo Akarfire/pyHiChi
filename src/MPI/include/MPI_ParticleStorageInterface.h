@@ -525,8 +525,8 @@ public:
 
                 if (!periodical) continue;
 
-                pfc::FP* data = outParticleData[dir].payload.data();
-                int particle_count = outParticleData[dir].getCount();
+                pfc::FP* data = outParticleData[dir].getTypePayload(type);
+                int particle_count = outParticleData[dir].getTypeCount(type);
 
                 pfc::FP* dpos_x = data + 0 * particle_count;
                 pfc::FP* dpos_y = data + 1 * particle_count;
@@ -581,8 +581,8 @@ public:
 
                 if (!periodical) continue;
 
-                pfc::FP* data = inParticleData[dir].payload.data();
-                int particle_count = inParticleData[dir].getCount();
+                pfc::FP* data = inParticleData[dir].getTypePayload(type);
+                int particle_count = inParticleData[dir].getTypeCount(type);
 
                 pfc::FP* dpos_x = data + 0 * particle_count;
                 pfc::FP* dpos_y = data + 1 * particle_count;
