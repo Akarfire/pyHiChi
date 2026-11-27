@@ -19,7 +19,7 @@ namespace mpi
 // 1) Extracts out-of-bound particles from the particle array and prepares them to be sent to another rank
 // 2) Inserts particles received from other ranks into the particle array
 // Base class with common helper functions
-class ParticleStorageInterface
+class ParticleStorageInterfaceBase
 {
 protected:
     
@@ -73,7 +73,7 @@ public:
 // 1) Extracts out-of-bound particles from the particle array and prepares them to be sent to another rank
 // 2) Inserts particles received from other ranks into the particle array
 // Version for a 3D uniform particle array with SoA data type
-class ParticleStorageInterface3D_Uniform_SoA : public ParticleStorageInterface
+class ParticleStorageInterface3D_Uniform_SoA : public ParticleStorageInterfaceBase
 {
     // Swaps particle at particleArray[index] with the particle before the tail
     // Returns the new index of the particle
@@ -367,7 +367,7 @@ public:
 
 // 1) Extracts out-of-bound particles from the Ensemble3D and prepares them to be sent to another rank
 // 2) Inserts particles received from other ranks into the Ensemble3D
-class ParticleStorageInterface3D_Uniform_SoA_Ensemble : public ParticleStorageInterface
+class ParticleStorageInterface3D_Uniform_SoA_Ensemble : public ParticleStorageInterfaceBase
 {
     // Swaps particle at particleArray[index] with the particle before the tail
     // Returns the new index of the particle
@@ -681,5 +681,4 @@ public:
         }
     }
 };
-
-}
+} // namespace mpi

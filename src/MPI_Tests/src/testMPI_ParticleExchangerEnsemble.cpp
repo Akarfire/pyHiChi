@@ -6,7 +6,7 @@
 
 #include "TestingUtility.h"
 #include "MPI_Utilities.h"
-#include "MPI_ParticleStorageInterface.h"
+#include "MPI_ParticleTransfer.h"
 #include "MPI_ParticleExchanger.h"
 
 using namespace mpi;
@@ -44,6 +44,8 @@ pfc::FP3 limitPositionEns(const pfc::FP3& pos, const pfc::FP3& lower_lim, const 
     return new_pos;
 }
 
+using Transfer = mpi::ParticleTransfer<mpi::ParticleTransferType::EnsembleUniform3DSoA>;
+
 TEST(MPI_ParticleExchanger, Ensemble_Exhange_Non_Periodical_One_To_Many_3_3_3)
 {
     setupParticlesEns();
@@ -64,7 +66,7 @@ TEST(MPI_ParticleExchanger, Ensemble_Exhange_Non_Periodical_One_To_Many_3_3_3)
     int center_rank = 13;
 
     // Particle exchanger
-    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA_Ensemble> particleExchanger;
+    mpi::ParticleExchanger<Transfer::ParticleData> particleExchanger;
 
     pfc::Ensemble3d ensemble;
 
@@ -144,15 +146,15 @@ TEST(MPI_ParticleExchanger, Ensemble_Exhange_Non_Periodical_One_To_Many_3_3_3)
         }
 
     // Communication
-    mpi::ParticleData3D_Uniform_SoA_Ensemble send_data[27];
-    mpi::ParticleData3D_Uniform_SoA_Ensemble recv_data[27];
+    Transfer::ParticleData send_data[27];
+    Transfer::ParticleData recv_data[27];
 
     int expected[pfc::sizeParticleTypes][27] = {};
-    mpi::ParticleStorageInterface3D_Uniform_SoA_Ensemble::collectParticles(&ensemble, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
+    Transfer::StorageInterface::collectParticles(&ensemble, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
     
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA_Ensemble::insertParticles(&ensemble, recv_data, lower_bound, upper_bound, mpi_rank, topology);
+    Transfer::StorageInterface::insertParticles(&ensemble, recv_data, lower_bound, upper_bound, mpi_rank, topology);
 
     // Validation
     
@@ -199,7 +201,7 @@ TEST(MPI_ParticleExchanger, Ensemble_Exhange_Non_Periodical_All_3_3_3)
     int center_rank = 13;
 
     // Particle exchanger
-    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA_Ensemble> particleExchanger;
+    mpi::ParticleExchanger<Transfer::ParticleData> particleExchanger;
 
     // Creating particle ensemble
     pfc::Ensemble3d ensemble;
@@ -239,15 +241,15 @@ TEST(MPI_ParticleExchanger, Ensemble_Exhange_Non_Periodical_All_3_3_3)
     }
 
     // Communication
-    mpi::ParticleData3D_Uniform_SoA_Ensemble send_data[27];
-    mpi::ParticleData3D_Uniform_SoA_Ensemble recv_data[27];
+    Transfer::ParticleData send_data[27];
+    Transfer::ParticleData recv_data[27];
 
     int expected[sizeParticleTypes][27] = {};
-    mpi::ParticleStorageInterface3D_Uniform_SoA_Ensemble::collectParticles(&ensemble, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
+    Transfer::StorageInterface::collectParticles(&ensemble, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
 
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA_Ensemble::insertParticles(&ensemble, recv_data, lower_bound, upper_bound, mpi_rank, topology);
+    Transfer::StorageInterface::insertParticles(&ensemble, recv_data, lower_bound, upper_bound, mpi_rank, topology);
 
     // Validation
 
@@ -295,7 +297,7 @@ TEST(MPI_ParticleExchanger, Ensemble_Exhange_Periodical_All_3_3_3)
     int center_rank = 13;
 
     // Particle exchanger
-    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA_Ensemble> particleExchanger;
+    mpi::ParticleExchanger<Transfer::ParticleData> particleExchanger;
 
     // Creating particle ensemble
     pfc::Ensemble3d ensemble;  
@@ -334,15 +336,15 @@ TEST(MPI_ParticleExchanger, Ensemble_Exhange_Periodical_All_3_3_3)
     }
 
     // Communication
-    mpi::ParticleData3D_Uniform_SoA_Ensemble send_data[27];
-    mpi::ParticleData3D_Uniform_SoA_Ensemble recv_data[27];
+    Transfer::ParticleData send_data[27];
+    Transfer::ParticleData recv_data[27];
 
     int expected[sizeParticleTypes][27] = {};
-    mpi::ParticleStorageInterface3D_Uniform_SoA_Ensemble::collectParticles(&ensemble, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
+    Transfer::StorageInterface::collectParticles(&ensemble, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
 
     particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
 
-    mpi::ParticleStorageInterface3D_Uniform_SoA_Ensemble::insertParticles(&ensemble, recv_data, lower_bound, upper_bound, mpi_rank, topology);
+    Transfer::StorageInterface::insertParticles(&ensemble, recv_data, lower_bound, upper_bound, mpi_rank, topology);
 
     // Validation
 
