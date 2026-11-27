@@ -136,7 +136,7 @@ struct ParticleData_Uniform_SoA_Ensemble
     // [1] -> count for type 0
     // [2] -> count for type 1
     // ...
-    int header[1 + sizeParticleTypes] = {};
+    int header[1 + pfc::sizeParticleTypes] = {};
 
     // Data
     // Type 0
@@ -183,7 +183,7 @@ struct ParticleData_Uniform_SoA_Ensemble
         header[type + 1] = count;
 
         int total_count = 0;
-        for (int i = 1; i < sizeParticleTypes + 1; i++)
+        for (int i = 1; i < pfc::sizeParticleTypes + 1; i++)
             total_count += header[i];   
         header[0] = total_count;
     }
@@ -206,7 +206,7 @@ struct ParticleData_Uniform_SoA_Ensemble
 
     // MPI Communication data
     static const MPI_Datatype headerMpiDataType = MPI_INT;
-    static const int headerMpiSize = 1 + sizeParticleTypes;
+    static const int headerMpiSize = 1 + pfc::sizeParticleTypes;
 
     static const MPI_Datatype payloadMpiDataType = MPI_DOUBLE;
     // Only valid after header is written
@@ -222,6 +222,6 @@ struct ParticleData_Uniform_SoA_Ensemble
 
 
 // Defines
-typedef typename ParticleData_Uniform_SoA<Three> ParticleData3D_Uniform_SoA;
-typedef typename ParticleData_Uniform_SoA_Ensemble<Three> ParticleData3D_Uniform_SoA_Ensemble;
+typedef typename ParticleData_Uniform_SoA<pfc::Three> ParticleData3D_Uniform_SoA;
+typedef typename ParticleData_Uniform_SoA_Ensemble<pfc::Three> ParticleData3D_Uniform_SoA_Ensemble;
 }
