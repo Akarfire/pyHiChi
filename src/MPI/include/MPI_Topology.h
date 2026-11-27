@@ -88,6 +88,10 @@ public:
     // MPI_INVALID_RANK if no neighbor exists
     int getNeighbor(int node_rank, const pfc::Int3& offset) const;
 
+    // Whether the neighbor in the specified direction lies across a topological loop (periodical) or not
+    // DOES NOT check validity of the neighbor!
+    bool isNeighborOverLoop(int node_rank, const pfc::Int3& offset) const;
+
 
     // MPI Communicator for processes that participate in this topology
     // NOTE: Depends on the rank this method is executed at

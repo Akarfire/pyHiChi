@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <random>
 
 #include "Constants.h"
 #include "FieldSolver.h"
@@ -12,6 +13,11 @@
 #include "Vectors.h"
 #include "Fdtd.h"
 #include "FieldBoundaryConditionFdtd.h"
+#include "Particle.h"
+
+#include "MPI_ParticleUtils.h"
+#include "MPI_ParticleStorageInterface.h"
+#include "MPI_ParticleExchanger.h"
 
 #include "HiChi_MPI.h"
 
@@ -20,6 +26,17 @@ using FieldSolverType = pfc::FDTD;
 using FP = pfc::FP;
 using FP3 = pfc::FP3;
 using Int3 = pfc::Int3;
+
+using ParticleWriteType = pfc::Particle<pfc::Three>;
+using ParticleReadType = pfc::ParticleProxy<pfc::Three>;
+
+namespace pfc {
+    namespace ParticleInfo {
+        std::vector<ParticleType> typesVector;
+        const ParticleType* types;
+        short numTypes;
+    } // namespace ParticleInfo
+} // namespace pica
 
 #define testFieldComponent Ex
 
@@ -116,7 +133,6 @@ void debugPrintGrid_xzplane(std::unique_ptr<GridType>& grid, int y)
     std::cout << std::endl << std::endl;
 }
 
-
 void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
 {
     Int3 size = grid->numCells;
@@ -132,8 +148,129 @@ void debugPrintGrid_index_xyplane(std::unique_ptr<GridType>& grid, int z)
     std::cout << std::endl << std::endl;
 }
 
+
+void setupParticles()
+{
+    pfc::ParticleInfo::typesVector = { { pfc::constants::electronMass, pfc::constants::electronCharge },
+        { pfc::constants::electronMass, -pfc::constants::electronCharge },
+        { pfc::constants::protonMass, -pfc::constants::electronCharge } };
+        pfc::ParticleInfo::types = &pfc::ParticleInfo::typesVector[0];
+        pfc::ParticleInfo::numTypes = sizeParticleTypes;
+}
+
+void debugPrintParticle(ParticleReadType& p)
+{
+    std::cout << "Particle : " << p.getPosition().toString() << " : " << p.getMomentum().toString() << " : " << 
+        p.getWeight() << " : " << p.getGamma() << " : " << p.getType() << std::endl;
+}
+
+void debugPrintParticleArray(pfc::ParticleArray3d& array)
+{
+    std::cout << "Particle Array" << std::endl;
+    for (int i = 0; i < array.size(); i++)
+        debugPrintParticle(array[i]);
+
+    std::cout << endl;
+}
+
 int main(int argc, char** argv)
 {
+    srand(2);
+
+    setupParticles();
+
+    // MPI initialization
+    MPI_Init(&argc, &argv);
+
+    // MPI Data
+    int mpi_rank, mpi_size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+
+    // Topology
+    pfc::Int3 sections(3, 3, 1);
+    std::shared_ptr<mpi::Topology> topology = std::make_shared<mpi::Topology>(sections, mpi::Topology::LoopType::None, mpi_size);
+    int center_rank = 4;
+
+    // Particle exchanger
+    mpi::ParticleExchanger<mpi::ParticleData3D_Uniform_SoA> particleExchanger;
+
+    // Creating particle type & array
+    MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
+    pfc::ParticleArray3d particle_array;    
+
+    // Config
+    size_t num_particles = 10;
+    const pfc::FP3 lower_bound(0.25, 0.25, 0.25);
+    const pfc::FP3 upper_bound(0.75, 0.75, 0.75);
+
+    // Fill with particles
+    if (mpi_rank == center_rank)
+        for (size_t i = 0; i < num_particles; i++)
+        {
+            ParticleWriteType p;
+            p.setVelocity(pfc::FP3(mpi_rank + 1, mpi_rank + 1, mpi_rank + 1));
+            p.setPosition(pfc::FP3( (float)(rand()) / RAND_MAX, 
+                                    (float)(rand()) / RAND_MAX, 
+                                    (float)(rand()) / RAND_MAX));
+            p.setWeight((mpi_rank + 1) * 5);
+            particle_array.pushBack(p);
+        }
+
+    // Pre communicate print
+    for (int r = 0; r < mpi_size; r++)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (mpi_rank == r)
+        {
+            std::cout << "[RANK " << mpi_rank << "] ";
+            debugPrintParticleArray(particle_array);
+            std::cout.flush();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    // Communication
+    if (mpi_rank == center_rank)
+    {
+        std::cout << "\n\n\nCOMMUNICATION\n\n\n";
+        std::cout.flush();
+    }
+
+    mpi::ParticleData3D_Uniform_SoA send_data[27];
+    mpi::ParticleData3D_Uniform_SoA recv_data[27];
+
+    int expected[27] = {};
+    mpi::ParticleStorageInterface3D_Uniform_SoA::collectParticles(&particle_array, send_data, lower_bound, upper_bound, mpi_rank, topology, expected);
+
+    particleExchanger.exchangeParticles(send_data, recv_data, mpi_rank, topology);
+
+    mpi::ParticleStorageInterface3D_Uniform_SoA::insertParticles(&particle_array, recv_data, lower_bound, upper_bound, mpi_rank, topology);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    // Post communication print
+    for (int r = 0; r < mpi_size; r++)
+    {
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (mpi_rank == r)
+        {
+            std::cout << "[RANK " << mpi_rank << "] ";
+            debugPrintParticleArray(particle_array);
+            std::cout.flush();
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    MPI_Finalize();
+    return 0;
+}
+
+/*
+int main(int argc, char** argv)
+{
+    MPI_Datatype particle_type = mpi::ParticleUtils<pfc::Three>::defineParticleType();
+
     Int3 gridSize = Int3(20, 10, 10);
     FP3 minCoords = FP3(0, 0, 0);
     FP3 maxCoords = FP3(1, 1, 1);
@@ -239,3 +376,4 @@ int main(int argc, char** argv)
     MPI_Finalize();
     return 0;
 }
+*/

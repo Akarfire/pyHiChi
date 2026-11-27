@@ -154,4 +154,22 @@ int Topology::getNeighbor(int node_rank, const pfc::Int3& offset) const
     return convertIndexToRank(neighbor_index);
 }
 
+// Whether the neighbor in the specified direction lies across a topological loop (periodical) or not
+// DOES NOT check validity of the neighbor!
+bool Topology::isNeighborOverLoop(int node_rank, const pfc::Int3& offset) const 
+{
+    if (node_rank == MPI_INVALID_RANK)
+        return false;
+
+    pfc::Int3 index = convertRankToIndex(node_rank);
+    if (index == MPI_INVALID_SECTION)
+        return false;
+
+    pfc::Int3 neighbor_index = index + offset;
+
+    return      (neighbor_index.x < 0 || neighbor_index.x >= sections_.x) && loop[0]
+            ||  (neighbor_index.y < 0 || neighbor_index.y >= sections_.y) && loop[1]
+            ||  (neighbor_index.z < 0 || neighbor_index.z >= sections_.z) && loop[2];
+}
+
 }

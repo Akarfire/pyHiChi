@@ -5,6 +5,7 @@ include_directories(
     ../Modules/Particle/include
     ../Modules/Field/include
     ../MPI/include
+    ./include
     ${FFT_INCLUDES})
 
 
@@ -16,6 +17,9 @@ add_executable(mpi_tests
     src/testMPI_GridSlicer.cpp
     src/testMPI_FieldSolver.cpp
     src/testMPI_BoundaryConditions.cpp
+
+    src/testMPI_ParticleExchanger.cpp
+    src/testMPI_ParticleExchangerEnsemble.cpp
 
     src/TestingUtility.cpp
 

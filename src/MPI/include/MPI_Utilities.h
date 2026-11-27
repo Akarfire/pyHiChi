@@ -15,6 +15,13 @@ static int MPI_INVALID_RANK = -1;
 // Invalid topological section value
 static pfc::Int3 MPI_INVALID_SECTION = pfc::Int3(MPI_INVALID_RANK, MPI_INVALID_RANK, MPI_INVALID_RANK);
 
+// Same rank (zero offset)
+static pfc::Int3 MPI_SAME_RANK = pfc::Int3(0, 0, 0);
+
+// Used with offsetToCubeCornerID
+// Marks the (0, 0, 0) offset
+static const int NO_DIRECTION = 13;
+
 // Defines the direction, in which the transmission will be performed (From sender to receiver)
 enum class Direction
 {
@@ -34,4 +41,30 @@ static const pfc::Int3 DirectionToOffset[6] =
 
 // Returns the inverse of the specified direction
 Direction invertDirection(const Direction& direction);
+
+
+// Converts (0|+-1, 0|+-1, 0|+-1) type offsets to 0 - 26 indices
+static inline int offsetToCubeCornerID(int x, int y, int z)
+{
+    return (z + 1) + (y + 1) * 3 + (x + 1) * 9;
+}
+
+// Converts (0|+-1, 0|+-1, 0|+-1) type offsets to 0 - 26 indices
+static inline int offsetToCubeCornerID(const pfc::Int3& offset)
+{
+    return offsetToCubeCornerID(offset.x, offset.y, offset.z);
+}
+
+// Converts 0 - 26 indices to (0|+-1, 0|+-1, 0|+-1) type offsets 
+static inline pfc::Int3 cubeCornerIdToOffset(int id)
+{
+    pfc::Int3 offset;
+
+    offset.x = (id / 9) - 1;
+    offset.y = ((id / 3) % 3) - 1;
+    offset.z = (id % 3) - 1;
+    
+    return offset;
+}
+
 }
